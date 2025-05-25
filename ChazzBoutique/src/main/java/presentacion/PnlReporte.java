@@ -9,9 +9,13 @@ import com.mycompany.chazzboutiquepersistencia.dtoReportes.ReporteVentaDTO;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.math.RoundingMode;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.temporal.TemporalAdjusters;
+import java.util.Calendar;
 import java.util.List;
+import java.util.TimeZone;
 import javax.persistence.PersistenceException;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
@@ -30,7 +34,7 @@ public class PnlReporte extends javax.swing.JPanel {
         initComponents();
         this.frmPrincipal = frmPrincipal;
         this.setSize(new Dimension(1701, 1080));
-
+      
         cbxPeriodo.addActionListener(e -> {
             String periodoSeleccionado = (String) cbxPeriodo.getSelectedItem();
             LocalDate hoy = LocalDate.now();
@@ -39,8 +43,12 @@ public class PnlReporte extends javax.swing.JPanel {
 
             switch (periodoSeleccionado) {
                 case "Semanal":
-                    inicio = hoy.with(java.time.DayOfWeek.MONDAY);
-                    fin = hoy.with(java.time.DayOfWeek.SUNDAY);
+                    inicio = hoy.with(DayOfWeek.MONDAY);
+                    fin = hoy.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+
+                    if (fin.isAfter(hoy)) {
+                        fin = hoy;
+                    }
                     break;
                 case "Mensual":
                     inicio = hoy.withDayOfMonth(1);
@@ -65,8 +73,14 @@ public class PnlReporte extends javax.swing.JPanel {
             fechaFin.setEnabled(false);
 
             // Convertir a Date para el DateChooser
-            java.util.Date dateInicio = java.util.Date.from(inicio.atStartOfDay(ZoneId.systemDefault()).toInstant());
-            java.util.Date dateFin = java.util.Date.from(fin.atStartOfDay(ZoneId.systemDefault()).toInstant());
+            Calendar calendarInicio = Calendar.getInstance();
+            calendarInicio.set(inicio.getYear(), inicio.getMonthValue() - 1, inicio.getDayOfMonth(), 0, 0, 0);
+            calendarInicio.set(Calendar.MILLISECOND, 0);
+            java.util.Date dateInicio = calendarInicio.getTime();
+            Calendar calendarFin = Calendar.getInstance();
+            calendarFin.set(fin.getYear(), fin.getMonthValue() - 1, fin.getDayOfMonth(), 0, 0, 0);
+            calendarFin.set(Calendar.MILLISECOND, 0);
+            java.util.Date dateFin = calendarFin.getTime();
 
             // Establecer en los componentes
             fechaInicio.setDate(dateInicio);
@@ -75,11 +89,29 @@ public class PnlReporte extends javax.swing.JPanel {
 
         cbxTipoReporte1.addActionListener(e -> {
             String tipo = (String) cbxTipoReporte1.getSelectedItem();
-            cbxPeriodo.setSelectedIndex(1);
             boolean esInventario = "Inventario actual".equals(tipo);
-            fechaInicio.setEnabled(!esInventario);
-            fechaFin.setEnabled(!esInventario);
-            cbxPeriodo.setEnabled(!esInventario);
+
+            if (esInventario) {
+                // Configuración para Inventario actual
+                cbxPeriodo.setSelectedIndex(1); // Semanal
+                cbxPeriodo.setEnabled(false);
+                fechaInicio.setEnabled(false);
+                fechaFin.setEnabled(false);
+
+                // Establecer rango de la semana actual
+                LocalDate hoy = LocalDate.now();
+                LocalDate inicioSemana = hoy.with(java.time.DayOfWeek.MONDAY);
+                LocalDate finSemana = hoy.with(java.time.DayOfWeek.SUNDAY);
+
+                // Conversión correcta de LocalDate a java.util.Date
+                fechaInicio.setDate(java.util.Date.from(inicioSemana.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+                fechaFin.setDate(java.util.Date.from(finSemana.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+            } else {
+                // Configuración para otros reportes
+                cbxPeriodo.setEnabled(true);
+                fechaInicio.setEnabled(true);
+                fechaFin.setEnabled(true);
+            }
         });
 
         tblReporte.setRowHeight(40);
@@ -110,8 +142,13 @@ public class PnlReporte extends javax.swing.JPanel {
     }
 
     private void generarReporte() {
+
         try {
+            // Limpiar renderizadores personalizados antes de generar un nuevo reporte
+            tblReporte.setDefaultRenderer(Object.class, new javax.swing.table.DefaultTableCellRenderer());
+
             String tipoReporte = (String) cbxTipoReporte1.getSelectedItem();
+            // Resto del código...
             if (fechaInicio.getDate() == null || fechaFin.getDate() == null) {
                 JOptionPane.showMessageDialog(this,
                         "Debes seleccionar ambas fechas: inicio y fin.",
@@ -124,21 +161,21 @@ public class PnlReporte extends javax.swing.JPanel {
             LocalDate fechaFin = this.fechaFin.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
             LocalDate hoy = LocalDate.now();
 
-            if (fechaFin.isBefore(fechaInicio)) {
-                JOptionPane.showMessageDialog(this,
-                        "La fecha de fin no puede ser anterior a la fecha de inicio.",
-                        "Fechas inválidas",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            if (fechaFin.isAfter(hoy)) {
-                JOptionPane.showMessageDialog(this,
-                        "La fecha de fin no puede ser posterior a hoy.",
-                        "Fecha inválida",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
+//            if (fechaFin.isBefore(fechaInicio)) {
+//                JOptionPane.showMessageDialog(this,
+//                        "La fecha de fin no puede ser anterior a la fecha de inicio.",
+//                        "Fechas inválidas",
+//                        JOptionPane.WARNING_MESSAGE);
+//                return;
+//            }
+//
+//            if (fechaFin.isAfter(hoy)) {
+//                JOptionPane.showMessageDialog(this,
+//                        "La fecha de fin no puede ser posterior a hoy.",
+//                        "Fecha inválida",
+//                        JOptionPane.WARNING_MESSAGE);
+//                return;
+//            }
 
             DefaultTableModel model = new DefaultTableModel();
             IReporteNegocio reporteNegocio = frmPrincipal.getReporteNegocio();
@@ -203,49 +240,29 @@ public class PnlReporte extends javax.swing.JPanel {
                     model.addColumn("Stock");
                     model.addColumn("Precio Unitario");
                     model.addColumn("Valor Total");
-                    String campoVacion = "";
+
                     for (ReporteInventarioDTO item : inventarioActual) {
                         model.addRow(new Object[]{
                             item.getNombreProducto(),
                             item.getTalla(),
-                            campoVacion,
+                            "", // Celda vacía que se mostrará con color
                             item.getStock(),
                             "$" + item.getPrecioUnitario().setScale(2, RoundingMode.HALF_UP),
                             "$" + item.getValorTotal().setScale(2, RoundingMode.HALF_UP)
                         });
-                        System.out.println(item.getColor());
                     }
-                    break;
 
+                    break;
                 default:
                     throw new IllegalArgumentException("Tipo de reporte no válido");
             }
 
             tblReporte.setModel(model);
-            int columnaVariante = 2; // Índice de columna "Variante"
 
-            tblReporte.getColumnModel().getColumn(columnaVariante).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
-                @Override
-                public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value,
-                        boolean isSelected, boolean hasFocus, int row, int column) {
-
-                    java.awt.Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
-                    if (!isSelected && inventarioActual != null && row < inventarioActual.size()) {
-                        String colorHex = inventarioActual.get(row).getColor(); // ejemplo "#FFC107"
-                        try {
-                            c.setBackground(Color.decode(colorHex));
-                        } catch (Exception e) {
-                            c.setBackground(Color.WHITE); // si el color es inválido
-                        }
-                    } else {
-                        c.setBackground(table.getSelectionBackground());
-                    }
-
-                    return c;
-                }
-            });
-
+            // LUEGO configurar el renderizador solo si es el reporte de inventario
+            if ("Inventario actual".equals(tipoReporte) && tblReporte.getColumnCount() > 2) {
+                tblReporte.getColumnModel().getColumn(2).setCellRenderer(new ColorCellRenderer(inventarioActual));
+            }
         } catch (PersistenceException e) {
             JOptionPane.showMessageDialog(this,
                     "Error de base de datos al generar el reporte: " + e.getMessage(),
@@ -335,6 +352,11 @@ public class PnlReporte extends javax.swing.JPanel {
 
         cbxPeriodo.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         cbxPeriodo.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Rango de Fechas", "Semanal", "Mensual", "Anual" }));
+        cbxPeriodo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbxPeriodoActionPerformed(evt);
+            }
+        });
 
         jLabel5.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
         jLabel5.setText("Periodo");
@@ -459,6 +481,38 @@ public class PnlReporte extends javax.swing.JPanel {
         this.generarReporte();
     }//GEN-LAST:event_btnGenerarReporteActionPerformed
 
+    private void cbxPeriodoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxPeriodoActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cbxPeriodoActionPerformed
+
+    private static class ColorCellRenderer extends javax.swing.table.DefaultTableCellRenderer {
+
+        private final List<ReporteInventarioDTO> inventario;
+
+        public ColorCellRenderer(List<ReporteInventarioDTO> inventario) {
+            this.inventario = inventario;
+        }
+
+        @Override
+        public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value,
+                boolean isSelected, boolean hasFocus, int row, int column) {
+
+            java.awt.Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+            if (row < inventario.size()) {
+                String colorHex = inventario.get(row).getColor();
+                try {
+                    c.setBackground(Color.decode(colorHex));
+                } catch (Exception e) {
+                    c.setBackground(Color.WHITE);
+                }
+            } else {
+                c.setBackground(Color.WHITE);
+            }
+
+            return c;
+        }
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnConfirmar;

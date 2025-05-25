@@ -5,9 +5,12 @@ import com.mycompany.chazzboutiquenegocio.dtos.CategoriaDTO;
 import com.mycompany.chazzboutiquenegocio.excepciones.NegocioException;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.RenderingHints;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -99,6 +102,24 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
                 frmPrincipal.getCategoriaNegocio().crearCategoria(dto);
                 JOptionPane.showMessageDialog(this, "Categoría registrada.");
             } else {
+                // Verificar que la categoría seleccionada aún existe
+                boolean existe = false;
+                List<CategoriaDTO> categorias = frmPrincipal.getCategoriaNegocio().obtenerCategorias();
+                for (CategoriaDTO cat : categorias) {
+                    if (cat.getId().equals(categoriaSeleccionada.getId())) {
+                        existe = true;
+                        break;
+                    }
+                }
+
+                if (!existe) {
+                    JOptionPane.showMessageDialog(this, "La categoría seleccionada ya no existe.");
+                    categoriaSeleccionada = null;
+                    limpiarFormulario();
+                    cargarCategorias();
+                    return;
+                }
+
                 categoriaSeleccionada.setNombreCategoria(nombre);
                 categoriaSeleccionada.setDescripcionCategoria(descripcion);
                 categoriaSeleccionada.setImagenCategoria(imagen);
@@ -217,15 +238,19 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
     }
 
     private void cargarImagenEnLabel(String rutaRelativa) {
-        File file = new File("src/main/resources" + rutaRelativa);
-        if (file.exists()) {
-            ImageIcon icon = new ImageIcon(file.getAbsolutePath());
-            Image img = icon.getImage().getScaledInstance(480, 600, Image.SCALE_SMOOTH);
-            lblImagen.setIcon(new ImageIcon(img));
-            lblImagen.setText("");
+        File archivoImagen = new File("imagenes/" + rutaRelativa);
+        if (archivoImagen.exists()) {
+            ImageIcon icon = new ImageIcon(archivoImagen.getAbsolutePath());
+            Image originalImage = icon.getImage();
+
+            // Escalado con mejor calidad
+            int width = 480;
+            int height = 600;
+            Image scaledImage = getHighQualityScaledImage(originalImage, width, height);
+
+            lblImagen.setIcon(new ImageIcon(scaledImage));
         } else {
             lblImagen.setIcon(null);
-            lblImagen.setText("Imagen no encontrada");
         }
     }
 
@@ -235,6 +260,13 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
         if (confirm == JOptionPane.YES_OPTION) {
             try {
                 frmPrincipal.getCategoriaNegocio().eliminarCategoria(id);
+
+                // Verificar si la categoría eliminada es la misma que está seleccionada
+                if (categoriaSeleccionada != null && categoriaSeleccionada.getId().equals(id)) {
+                    categoriaSeleccionada = null;
+                    limpiarFormulario();
+                }
+
                 cargarCategorias();
             } catch (NegocioException e) {
                 JOptionPane.showMessageDialog(this, "No se puede eliminar la categoría: elimine primero los productos relacionados.");
@@ -243,9 +275,20 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
     }
 
     private void limpiarFormulario() {
+        categoriaSeleccionada = null;
         txtNombreCategoria.setText("");
         txtDescripcion.setText("");
-        lblImagen.setText("");
+        this.imagen = null;
+        // Cargar imagen por defecto desde resources
+        URL url = getClass().getResource("/images/1.png");
+        if (url != null) {
+            ImageIcon icon = new ImageIcon(url);
+            Image img = icon.getImage().getScaledInstance(480, 600, Image.SCALE_SMOOTH); // ajusta dimensiones si necesitas
+            lblImagen.setIcon(new ImageIcon(img));
+        } else {
+            System.err.println("No se encontró la imagen /images/1.png");
+            lblImagen.setIcon(null); // Limpia el ícono si no se encuentra
+        }
     }
 
     private String extraerNombreArchivo(String ruta) {
@@ -452,7 +495,19 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
     private void btnAgregarImagenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarImagenActionPerformed
         seleccionarImagen();
     }//GEN-LAST:event_btnAgregarImagenActionPerformed
+    private Image getHighQualityScaledImage(Image srcImg, int w, int h) {
+        BufferedImage resizedImg = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = resizedImg.createGraphics();
 
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        g2.drawImage(srcImg, 0, 0, w, h, null);
+        g2.dispose();
+
+        return resizedImg;
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAgregarImagen;

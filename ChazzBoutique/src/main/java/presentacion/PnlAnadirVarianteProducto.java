@@ -410,7 +410,7 @@ public class PnlAnadirVarianteProducto extends javax.swing.JPanel {
                 imagen = "/variantesProductos/" + nombreArchivo;
 
                 ImageIcon icon = new ImageIcon(destino.getAbsolutePath());
-                Image img = icon.getImage().getScaledInstance(lblImagen.getWidth(), lblImagen.getHeight(), Image.SCALE_SMOOTH);
+                Image img = icon.getImage().getScaledInstance(400, 600, Image.SCALE_SMOOTH);
                 lblImagen.setIcon(new ImageIcon(img));
                 lblImagen.setText("");
 

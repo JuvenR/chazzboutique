@@ -105,6 +105,7 @@ presentacion\PanelCategoriaProducto$14.class
 presentacion\PnlReporte$3.class
 presentacion\PanelVenta$10.class
 presentacion\PnlAnadirVarianteProducto.class
+presentacion\PnlReporte$ColorCellRenderer.class
 utils\ButtonRenderer$1.class
 presentacion\PnlAnadirVarianteProducto$5.class
 utils\ModeloTablaVentas.class

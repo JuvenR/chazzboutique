@@ -44,6 +44,7 @@ public class PanelHome extends javax.swing.JPanel {
         this.frmPrincipal = frmPrincipal;
         this.varianteNegocio = frmPrincipal.getVarianteProductoNegocio();
         cargarCategorias();
+        this.setSize(1749, 1177);
         cargarVariantes(paginaActual, tamanoPagina, filtroActual);
 
         txtBuscador.setForeground(Color.GRAY);
@@ -103,9 +104,16 @@ public class PanelHome extends javax.swing.JPanel {
     }
 
     private void mostrarCategorias() {
+        List<JPanel> paneles = List.of(panelCategoria1, panelCategoria2, panelCategoria3, panelCategoria4, panelCategoria5);
         List<JLabel> etiquetas = List.of(lblCategoria1, lblCategoria2, lblCategoria3, lblCategoria4, lblCategoria5);
         List<JButton> botones = List.of(btnImagenCategoria1, btnImagenCategoria2, btnImagenCategoria3, btnImagenCategoria4, btnImagenCategoria5);
-
+        if (categorias == null || categorias.isEmpty()) {
+            // Ocultar todos los paneles si no hay categorías
+            for (JPanel panel : paneles) {
+                panel.setVisible(false);
+            }
+            return;
+        }
         int total = categorias.size();
 
         for (int i = 0; i < VISTA_MAXIMA; i++) {
@@ -1012,14 +1020,6 @@ public class PanelHome extends javax.swing.JPanel {
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(790, 790, 790)
-                .addComponent(btnLeftPagina1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(lblPagina1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(btnRightPagina, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(280, 280, 280)
                 .addComponent(lblCategorias)
                 .addGap(242, 242, 242)
@@ -1030,15 +1030,22 @@ public class PanelHome extends javax.swing.JPanel {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addComponent(panelCarrusel, javax.swing.GroupLayout.PREFERRED_SIZE, 1743, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jPanel10, javax.swing.GroupLayout.PREFERRED_SIZE, 1310, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(200, 200, 200))
-            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel1Layout.createSequentialGroup()
-                    .addGap(324, 324, 324)
-                    .addComponent(lblArticulos)
-                    .addContainerGap(1089, Short.MAX_VALUE)))
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(790, 790, 790)
+                        .addComponent(btnLeftPagina1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(lblPagina1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(btnRightPagina, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(211, 211, 211)
+                        .addComponent(jPanel10, javax.swing.GroupLayout.PREFERRED_SIZE, 1310, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(285, 285, 285)
+                        .addComponent(lblArticulos)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1054,7 +1061,9 @@ public class PanelHome extends javax.swing.JPanel {
                             .addComponent(jPanel17, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(panelCarrusel, javax.swing.GroupLayout.PREFERRED_SIZE, 324, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(79, 79, 79)
+                .addGap(13, 13, 13)
+                .addComponent(lblArticulos)
+                .addGap(18, 18, 18)
                 .addComponent(jPanel10, javax.swing.GroupLayout.PREFERRED_SIZE, 420, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1064,11 +1073,6 @@ public class PanelHome extends javax.swing.JPanel {
                         .addGap(12, 12, 12)
                         .addComponent(lblPagina1)))
                 .addContainerGap(92, Short.MAX_VALUE))
-            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel1Layout.createSequentialGroup()
-                    .addGap(508, 508, 508)
-                    .addComponent(lblArticulos)
-                    .addContainerGap(621, Short.MAX_VALUE)))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -1086,11 +1090,15 @@ public class PanelHome extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnLeftCategoriaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLeftCategoriaActionPerformed
+        if (categorias.isEmpty()) {
+            return;
+        }
         indiceCarrusel = (indiceCarrusel - 1 + categorias.size()) % categorias.size();
         mostrarCategorias();
     }//GEN-LAST:event_btnLeftCategoriaActionPerformed
 
     private void btnRightPaginaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRightPaginaActionPerformed
+
         if (hayMasPaginas) {
             paginaActual++;
             lblPagina1.setText("Pagina " + paginaActual);
@@ -1119,6 +1127,9 @@ public class PanelHome extends javax.swing.JPanel {
     }//GEN-LAST:event_btnVer1ActionPerformed
 
     private void btnRightCarruselActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRightCarruselActionPerformed
+        if (categorias.isEmpty()) {
+            return;
+        }
         indiceCarrusel = (indiceCarrusel + 1 + categorias.size()) % categorias.size();
         mostrarCategorias();
     }//GEN-LAST:event_btnRightCarruselActionPerformed

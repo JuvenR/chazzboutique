@@ -24,7 +24,6 @@ import java.time.LocalDate;
  */
 public class VentaNegocio implements IVentaNegocio {
 
-
     private final IVentaDAO ventaDAO;
     private final IDetalleVentaDAO detalleVentaDAO;
     private final IVarianteProductoDAO varianteProductoDAO;
@@ -39,31 +38,30 @@ public class VentaNegocio implements IVentaNegocio {
     }
 
     @Override
-    public VentaDTO registrarVenta( VentaDTO ventaDTO) throws NegocioException {
+    public VentaDTO registrarVenta(VentaDTO ventaDTO) throws NegocioException {
         try {
             // Validaciones
             if (ventaDTO.getDetalles() == null || ventaDTO.getDetalles().isEmpty()) {
                 throw new NegocioException("Debe agregar productos a la venta");
             }
-
-            // Convertir DTO a entidad Venta
-            Venta venta = new Venta();
-            venta.setUsuario(usuarioDAO.buscarPorId(ventaDTO.getUsuarioId()));
-            venta.setFechaVenta(LocalDate.now());
-            venta.setVentaTotal(ventaDTO.getTotal());
-            venta.setEstadoVenta("COMPLETADA");
-
-            // Registrar venta primero para obtener ID
-            venta = ventaDAO.registrarVenta(venta);
-            ventaDTO.setId(venta.getId());
-            // Procesar detalles
             for (DetalleVentaDTO detalleDTO : ventaDTO.getDetalles()) {
                 System.out.println(detalleDTO.toString());
                 VarianteProducto variante = varianteProductoDAO.obtenerPorCodigoBarra(detalleDTO.getCodigoVariante());
-
                 if (variante.getStock() < detalleDTO.getCantidad()) {
                     throw new NegocioException("Stock insuficiente para: " + variante.getProducto().getNombre());
                 }
+
+                // Convertir DTO a entidad Venta
+                Venta venta = new Venta();
+                venta.setUsuario(usuarioDAO.buscarPorId(ventaDTO.getUsuarioId()));
+                venta.setFechaVenta(LocalDate.now());
+                venta.setVentaTotal(ventaDTO.getTotal());
+                venta.setEstadoVenta("COMPLETADA");
+
+                // Registrar venta primero para obtener ID
+                venta = ventaDAO.registrarVenta(venta);
+                ventaDTO.setId(venta.getId());
+                // Procesar detalles
 
                 // Crear y registrar detalle
                 DetalleVenta detalle = new DetalleVenta();

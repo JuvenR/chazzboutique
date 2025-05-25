@@ -85,6 +85,7 @@ public class ReporteDAO implements IReporteDAO {
     public List<ReporteCategoriaDTO> obtenerIngresosPorCategoria(LocalDate fechaInicio, LocalDate fechaFin) throws PersistenceException {
         EntityManager em = conexionBD.getEntityManager();
         try {
+            // Calcular el total de ventas en el periodo
             BigDecimal totalVentas = em.createQuery(
                     "SELECT SUM(v.ventaTotal) FROM Venta v WHERE v.fechaVenta BETWEEN :fechaInicio AND :fechaFin",
                     BigDecimal.class)
@@ -92,12 +93,17 @@ public class ReporteDAO implements IReporteDAO {
                     .setParameter("fechaFin", fechaFin)
                     .getSingleResult();
 
+            // Si no hay ventas, establecer totalVentas como 1 para evitar división por cero
             if (totalVentas == null || totalVentas.compareTo(BigDecimal.ZERO) == 0) {
                 totalVentas = BigDecimal.ONE;
             }
 
-            String jpql = "SELECT new com.mycompany.chazzboutiquepersistencia.dtoReportes.ReporteCategoriaDTO(c.nombreCategoria, COUNT(v), CAST(SUM(v.ventaTotal) AS DECIMAL(10,2)), "
-                    + "CAST((SUM(v.ventaTotal) / :totalVentas) * 100 AS DECIMAL(10,2))) "
+            // Consulta JPQL corregida
+            String jpql = "SELECT new com.mycompany.chazzboutiquepersistencia.dtoReportes.ReporteCategoriaDTO("
+                    + "c.nombreCategoria, "
+                    + "COUNT(DISTINCT v.id), "
+                    + "SUM(d.precioUnitario * d.cantidad), "
+                    + "(SUM(d.precioUnitario * d.cantidad) / :totalVentas) * 100) "
                     + "FROM Venta v "
                     + "JOIN v.detallesVentas d "
                     + "JOIN d.varianteProducto vp "
@@ -105,7 +111,7 @@ public class ReporteDAO implements IReporteDAO {
                     + "JOIN p.categoria c "
                     + "WHERE v.fechaVenta BETWEEN :fechaInicio AND :fechaFin "
                     + "GROUP BY c.nombreCategoria "
-                    + "ORDER BY SUM(v.ventaTotal) DESC";
+                    + "ORDER BY SUM(d.precioUnitario * d.cantidad) DESC";
 
             TypedQuery<ReporteCategoriaDTO> query = em.createQuery(jpql, ReporteCategoriaDTO.class);
             query.setParameter("fechaInicio", fechaInicio);
