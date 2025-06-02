@@ -234,6 +234,7 @@ public class PanelHome extends javax.swing.JPanel {
         lblCategoria5 = new javax.swing.JLabel();
         btnRightCarrusel = new utils.BotonMenu();
         jPanel10 = new javax.swing.JPanel();
+        jPanel2 = new javax.swing.JPanel();
         panelArticulo1 = new javax.swing.JPanel();
         lblImagenArticulo1 = new javax.swing.JLabel();
         lblNombreArticulo1 = new javax.swing.JLabel();
@@ -258,6 +259,7 @@ public class PanelHome extends javax.swing.JPanel {
         lblTalla3 = new javax.swing.JLabel();
         btnColor3 = new javax.swing.JButton();
         btnVer3 = new utils.BotonMenu();
+        jPanel3 = new javax.swing.JPanel();
         panelArticulo4 = new javax.swing.JPanel();
         lblImagenArticulo4 = new javax.swing.JLabel();
         lblNombreArticulo4 = new javax.swing.JLabel();
@@ -494,6 +496,9 @@ public class PanelHome extends javax.swing.JPanel {
         panelCarrusel.add(btnRightCarrusel);
 
         jPanel10.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel10.setPreferredSize(new java.awt.Dimension(1310, 420));
+
+        jPanel2.setBackground(new java.awt.Color(255, 255, 255));
 
         lblImagenArticulo1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/imagencatalogo.png"))); // NOI18N
 
@@ -569,7 +574,7 @@ public class PanelHome extends javax.swing.JPanel {
                         .addGap(28, 28, 28))))
         );
 
-        jPanel10.add(panelArticulo1);
+        jPanel2.add(panelArticulo1);
 
         lblImagenArticulo2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/imagencatalogo.png"))); // NOI18N
 
@@ -645,7 +650,7 @@ public class PanelHome extends javax.swing.JPanel {
                         .addGap(28, 28, 28))))
         );
 
-        jPanel10.add(panelArticulo2);
+        jPanel2.add(panelArticulo2);
 
         lblImagenArticulo3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/imagencatalogo.png"))); // NOI18N
 
@@ -721,7 +726,10 @@ public class PanelHome extends javax.swing.JPanel {
                         .addGap(28, 28, 28))))
         );
 
-        jPanel10.add(panelArticulo3);
+        jPanel2.add(panelArticulo3);
+
+        jPanel3.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel3.setPreferredSize(new java.awt.Dimension(1298, 196));
 
         lblImagenArticulo4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/imagencatalogo.png"))); // NOI18N
 
@@ -797,7 +805,7 @@ public class PanelHome extends javax.swing.JPanel {
                         .addGap(28, 28, 28))))
         );
 
-        jPanel10.add(panelArticulo4);
+        jPanel3.add(panelArticulo4);
 
         lblImagenArticulo5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/imagencatalogo.png"))); // NOI18N
 
@@ -873,7 +881,7 @@ public class PanelHome extends javax.swing.JPanel {
                         .addGap(28, 28, 28))))
         );
 
-        jPanel10.add(panelArticulo5);
+        jPanel3.add(panelArticulo5);
 
         lblImagenArticulo6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/imagencatalogo.png"))); // NOI18N
 
@@ -949,7 +957,28 @@ public class PanelHome extends javax.swing.JPanel {
                         .addGap(28, 28, 28))))
         );
 
-        jPanel10.add(panelArticulo6);
+        jPanel3.add(panelArticulo6);
+
+        javax.swing.GroupLayout jPanel10Layout = new javax.swing.GroupLayout(jPanel10);
+        jPanel10.setLayout(jPanel10Layout);
+        jPanel10Layout.setHorizontalGroup(
+            jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel10Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        jPanel10Layout.setVerticalGroup(
+            jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel10Layout.createSequentialGroup()
+                .addGap(5, 5, 5)
+                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(7, Short.MAX_VALUE))
+        );
 
         lblCategorias.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
         lblCategorias.setText("Categorias");
@@ -1031,6 +1060,10 @@ public class PanelHome extends javax.swing.JPanel {
                 .addComponent(panelCarrusel, javax.swing.GroupLayout.PREFERRED_SIZE, 1743, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, Short.MAX_VALUE))
             .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGap(285, 285, 285)
+                .addComponent(lblArticulos)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(790, 790, 790)
@@ -1041,10 +1074,7 @@ public class PanelHome extends javax.swing.JPanel {
                         .addComponent(btnRightPagina, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(211, 211, 211)
-                        .addComponent(jPanel10, javax.swing.GroupLayout.PREFERRED_SIZE, 1310, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(285, 285, 285)
-                        .addComponent(lblArticulos)))
+                        .addComponent(jPanel10, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
@@ -1064,7 +1094,7 @@ public class PanelHome extends javax.swing.JPanel {
                 .addGap(13, 13, 13)
                 .addComponent(lblArticulos)
                 .addGap(18, 18, 18)
-                .addComponent(jPanel10, javax.swing.GroupLayout.PREFERRED_SIZE, 420, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jPanel10, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(btnRightPagina, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1081,7 +1111,7 @@ public class PanelHome extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 6, Short.MAX_VALUE))
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1188,6 +1218,8 @@ public class PanelHome extends javax.swing.JPanel {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel10;
     private javax.swing.JPanel jPanel17;
+    private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
     private javax.swing.JLabel lblArticulos;
     private javax.swing.JLabel lblCategoria1;
     private javax.swing.JLabel lblCategoria2;
