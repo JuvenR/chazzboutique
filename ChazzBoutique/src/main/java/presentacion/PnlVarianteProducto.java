@@ -34,6 +34,7 @@ public class PnlVarianteProducto extends javax.swing.JPanel {
     private String imagen;
     private BufferedImage imagenSeleccionadaBuffered;
     private String nombreImagenTemporal;
+    private boolean modoEdicion = false;
 
     /**
      * Creates new form PnlAnadirProducto
@@ -62,7 +63,7 @@ public class PnlVarianteProducto extends javax.swing.JPanel {
         txtPrecioCompra.setEditable(false);
         txtPrecioVenta.setEditable(false);
         txtTalla.setEditable(false);
-        btnColor.setEnabled(false);
+        btnColor.setEnabled(true); // Siempre habilitado visualmente
         btnGenerarCodigoBarras.setEnabled(false);
         btnEditar.setEnabled(true); // Esto sí lo puedes dejar activado para permitir edición si deseas
         btnConfirmar1.setEnabled(false); // O activarlo solo si presionan "Editar"
@@ -78,7 +79,10 @@ public class PnlVarianteProducto extends javax.swing.JPanel {
 
         // Color
         try {
-            btnColor.setBackground(Color.decode(variante.getColor()));
+            Color color = Color.decode(variante.getColor());
+            btnColor.setBackground(color);
+            // FlatLaf: mantener color aunque esté deshabilitado
+            btnColor.putClientProperty("FlatLaf.style", String.format("background: %s;", variante.getColor()));
         } catch (Exception e) {
             btnColor.setBackground(Color.WHITE);
         }
@@ -438,10 +442,12 @@ public class PnlVarianteProducto extends javax.swing.JPanel {
     }//GEN-LAST:event_btnAgregarImagenActionPerformed
 
     private void btnColorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnColorActionPerformed
+        if (!modoEdicion) {
+            return; // ← Bloquea si no está en edición
+        }
         Color colorSeleccionado = JColorChooser.showDialog(this, "Selecciona un color", btnColor.getBackground());
         if (colorSeleccionado != null) {
             btnColor.setBackground(colorSeleccionado);
-            // Imprimir el valor en hexadecimal si lo necesitas:
             String hex = String.format("#%02x%02x%02x",
                     colorSeleccionado.getRed(),
                     colorSeleccionado.getGreen(),
@@ -456,18 +462,17 @@ public class PnlVarianteProducto extends javax.swing.JPanel {
     }//GEN-LAST:event_btnGenerarCodigoBarrasActionPerformed
 
     private void btnEditarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditarActionPerformed
-        boolean modoEdicion = btnEditar.getText().equals("Editar");
+        modoEdicion = btnEditar.getText().equals("Editar");
+        btnEditar.setText(modoEdicion ? "Cancelar" : "Editar");
 
-        txtCodigoBarras1.setEditable(false);
+// tus otros cambios:
+        btnAgregarImagen.setEnabled(modoEdicion);
+        btnGenerarCodigoBarras.setEnabled(modoEdicion);
+        btnConfirmar1.setEnabled(modoEdicion);
         txtPrecioCompra.setEditable(modoEdicion);
         txtPrecioVenta.setEditable(modoEdicion);
         txtTalla.setEditable(modoEdicion);
-        btnColor.setEnabled(modoEdicion);
-        btnGenerarCodigoBarras.setEnabled(modoEdicion);
-        btnConfirmar1.setEnabled(modoEdicion);
-        btnAgregarImagen.setEnabled(modoEdicion); // <<== Añadido
 
-        btnEditar.setText(modoEdicion ? "Cancelar" : "Editar");
     }//GEN-LAST:event_btnEditarActionPerformed
 
     private void btnConfirmar1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConfirmar1ActionPerformed
