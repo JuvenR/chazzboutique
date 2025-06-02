@@ -17,6 +17,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
@@ -38,6 +39,8 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
     private DefaultTableModel tableModel;
     private CategoriaDTO categoriaSeleccionada;
     private String imagen;
+    private BufferedImage imagenSeleccionadaBuffered;
+    private String nombreImagenTemporal;
 
     public PnlAnadirCategoria(FrmPrincipal frmPrincipal) {
         initComponents();
@@ -72,6 +75,17 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
                 return c;
             }
         });
+
+        tblCategorias.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                int row = tblCategorias.getSelectedRow();
+                if (row >= 0) {
+                    editarCategoria(row);
+                }
+            }
+        });
+
         tblCategorias.setRowHeight(40);
 
         JTableHeader header = tblCategorias.getTableHeader();
@@ -89,16 +103,55 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
     private void guardarCategoria() {
         String nombre = txtNombreCategoria.getText().trim();
         String descripcion = txtDescripcion.getText().trim();
-        String imagen = this.imagen != null ? this.imagen : " ";
+        String rutaImagenFinal = " ";
+
+        if (imagenSeleccionadaBuffered == null && categoriaSeleccionada == null) {
+            JOptionPane.showMessageDialog(this, "Debes seleccionar una imagen.");
+            return;
+        }
+
+        if (imagenSeleccionadaBuffered == null && categoriaSeleccionada != null && this.imagen == null) {
+            JOptionPane.showMessageDialog(this, "Esta categoría no tiene imagen. Selecciona una imagen para continuar.");
+            return;
+        }
 
         if (nombre.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Nombre es obligatorio.");
             return;
         }
 
+        // Procesar imagen seleccionada si existe
+        if (imagenSeleccionadaBuffered != null && nombreImagenTemporal != null) {
+            try {
+                File carpetaDestino = new File("imagenes/categorias/");
+                if (!carpetaDestino.exists()) {
+                    carpetaDestino.mkdirs();
+                }
+
+                File destino = new File(carpetaDestino, nombreImagenTemporal);
+
+// Si ya existe un archivo con ese nombre, generar uno nuevo único
+                int contador = 1;
+                while (destino.exists()) {
+                    String nombreBase = nombreImagenTemporal.substring(0, nombreImagenTemporal.lastIndexOf('.'));
+                    String extension = nombreImagenTemporal.substring(nombreImagenTemporal.lastIndexOf('.') + 1);
+                    String nuevoNombre = nombreBase + "_" + contador + "." + extension;
+                    destino = new File(carpetaDestino, nuevoNombre);
+                    contador++;
+                }
+                ImageIO.write(imagenSeleccionadaBuffered, "png", destino);
+                imagen = "/categorias/" + destino.getName();
+
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this, "Error al guardar la imagen: " + ex.getMessage());
+            }
+        } else if (this.imagen != null) {
+            rutaImagenFinal = this.imagen;
+        }
+
         try {
             if (categoriaSeleccionada == null) {
-                CategoriaDTO dto = new CategoriaDTO(null, nombre, descripcion, imagen);
+                CategoriaDTO dto = new CategoriaDTO(null, nombre, descripcion, rutaImagenFinal);
                 frmPrincipal.getCategoriaNegocio().crearCategoria(dto);
                 JOptionPane.showMessageDialog(this, "Categoría registrada.");
             } else {
@@ -122,7 +175,7 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
 
                 categoriaSeleccionada.setNombreCategoria(nombre);
                 categoriaSeleccionada.setDescripcionCategoria(descripcion);
-                categoriaSeleccionada.setImagenCategoria(imagen);
+                categoriaSeleccionada.setImagenCategoria(rutaImagenFinal);
                 frmPrincipal.getCategoriaNegocio().actualizarCategoria(categoriaSeleccionada);
                 JOptionPane.showMessageDialog(this, "Categoría actualizada.");
                 categoriaSeleccionada = null;
@@ -130,6 +183,10 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
 
             limpiarFormulario();
             cargarCategorias();
+
+            // Limpiar imagen temporal
+            imagenSeleccionadaBuffered = null;
+            nombreImagenTemporal = null;
 
         } catch (NegocioException e) {
             JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
@@ -159,25 +216,35 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
             File imagenSeleccionada = fileChooser.getSelectedFile();
 
             try {
+                BufferedImage ropa = ImageIO.read(imagenSeleccionada);
+                nombreImagenTemporal = imagenSeleccionada.getName();
 
-                String nombreArchivo = imagenSeleccionada.getName();
-                File carpetaDestino = new File("imagenes/categorias/");
-                if (!carpetaDestino.exists()) {
-                    carpetaDestino.mkdirs();
+                // Cargar el marco
+                URL marcoURL = getClass().getResource("/images/marco_chazz.png");
+                if (marcoURL == null) {
+                    JOptionPane.showMessageDialog(this, "No se encontró el marco.");
+                    return;
                 }
+                BufferedImage marco = ImageIO.read(marcoURL);
 
-                File destino = new File(carpetaDestino, nombreArchivo);
-                Files.copy(imagenSeleccionada.toPath(), destino.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                // Escalar y combinar
+                Image ropaEscalada = ropa.getScaledInstance(marco.getWidth(), marco.getHeight(), Image.SCALE_SMOOTH);
+                BufferedImage ropaFinal = new BufferedImage(marco.getWidth(), marco.getHeight(), BufferedImage.TYPE_INT_RGB);
+                Graphics2D g2 = ropaFinal.createGraphics();
+                g2.drawImage(ropaEscalada, 0, 0, null);
+                g2.dispose();
 
-                imagen = "/categorias/" + nombreArchivo;
-                ImageIcon icon = new ImageIcon(destino.getAbsolutePath());
-                Image img = icon.getImage().getScaledInstance(lblImagen.getWidth(), lblImagen.getHeight(), Image.SCALE_SMOOTH);
+                imagenSeleccionadaBuffered = aplicarMarco(ropaFinal, marco); // Solo la guardamos en memoria
+
+                // Mostrar previsualización
+                Image img = imagenSeleccionadaBuffered.getScaledInstance(lblImagen.getWidth(), lblImagen.getHeight(), Image.SCALE_SMOOTH);
                 lblImagen.setIcon(new ImageIcon(img));
                 lblImagen.setText("");
 
             } catch (IOException e) {
-                JOptionPane.showMessageDialog(this, "Error al copiar la imagen: " + e.getMessage());
+                JOptionPane.showMessageDialog(this, "Error al procesar la imagen: " + e.getMessage());
             }
+
         }
     }
 
@@ -296,6 +363,18 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
             return "";
         }
         return new File(ruta).getName(); // obtiene solo 'imagen.png'
+    }
+
+    private BufferedImage aplicarMarco(BufferedImage base, BufferedImage marco) {
+        BufferedImage combinado = new BufferedImage(
+                base.getWidth(), base.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = combinado.createGraphics();
+
+        g.drawImage(base, 0, 0, null);
+        g.drawImage(marco, 0, 0, base.getWidth(), base.getHeight(), null); // Ajustamos tamaño
+        g.dispose();
+
+        return combinado;
     }
 
     /**

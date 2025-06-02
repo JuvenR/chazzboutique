@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.util.Random;
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JColorChooser;
 import javax.swing.JFileChooser;
@@ -31,6 +32,8 @@ public class PnlVarianteProducto extends javax.swing.JPanel {
     private IVarianteProductoNegocio varianteNegocio;
     private VarianteProductoDTO variante;
     private String imagen;
+    private BufferedImage imagenSeleccionadaBuffered;
+    private String nombreImagenTemporal;
 
     /**
      * Creates new form PnlAnadirProducto
@@ -409,31 +412,27 @@ public class PnlVarianteProducto extends javax.swing.JPanel {
 
         int resultado = fileChooser.showOpenDialog(this);
         if (resultado == JFileChooser.APPROVE_OPTION) {
-            File imagenSeleccionada = fileChooser.getSelectedFile();
-
+            File archivo = fileChooser.getSelectedFile();
             try {
-                String nombreArchivo = imagenSeleccionada.getName();
-                File carpetaDestino = new File("imagenes/variantesProductos/");
-                if (!carpetaDestino.exists()) {
-                    carpetaDestino.mkdirs();
-                }
+                imagenSeleccionadaBuffered = ImageIO.read(archivo);
+                nombreImagenTemporal = System.currentTimeMillis() + ".png";
 
-                File destino = new File(carpetaDestino, nombreArchivo);
-                java.nio.file.Files.copy(
-                        imagenSeleccionada.toPath(),
-                        destino.toPath(),
-                        java.nio.file.StandardCopyOption.REPLACE_EXISTING
-                );
+                BufferedImage marco = ImageIO.read(getClass().getResource("/images/marco_chazz.png"));
+                BufferedImage combinada = new BufferedImage(
+                        marco.getWidth(), marco.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                Graphics2D g = combinada.createGraphics();
+                g.drawImage(imagenSeleccionadaBuffered, 0, 0, marco.getWidth(), marco.getHeight(), null);
+                g.drawImage(marco, 0, 0, null);
+                g.dispose();
 
-                imagen = "/variantesProductos/" + nombreArchivo;
+                imagenSeleccionadaBuffered = combinada;
 
-                ImageIcon icon = new ImageIcon(destino.getAbsolutePath());
-                Image img = icon.getImage().getScaledInstance(lblImagen.getWidth(), lblImagen.getHeight(), Image.SCALE_SMOOTH);
-                lblImagen.setIcon(new ImageIcon(img));
-                lblImagen.setText("");
-
-            } catch (IOException e) {
-                javax.swing.JOptionPane.showMessageDialog(this, "Error al copiar la imagen: " + e.getMessage());
+                // Mostrar en el JLabel
+                ImageIcon icon = new ImageIcon(imagenSeleccionadaBuffered.getScaledInstance(
+                        lblImagen.getWidth(), lblImagen.getHeight(), Image.SCALE_SMOOTH));
+                lblImagen.setIcon(icon);
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this, "Error al procesar la imagen: " + ex.getMessage());
             }
         }
     }//GEN-LAST:event_btnAgregarImagenActionPerformed
@@ -474,15 +473,48 @@ public class PnlVarianteProducto extends javax.swing.JPanel {
     private void btnConfirmar1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConfirmar1ActionPerformed
         try {
             String talla = txtTalla.getText().trim();
+            if (talla.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "La talla es obligatoria.", "Campo requerido", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
             BigDecimal precioCompra = new BigDecimal(txtPrecioCompra.getText().replace("$", "").trim());
             BigDecimal precioVenta = new BigDecimal(txtPrecioVenta.getText().replace("$", "").trim());
-            Color color = btnColor.getBackground();
-            String hexColor = String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
-            String imagen = this.imagen != null ? this.imagen : " ";
+
+            if (btnColor.getBackground().equals(new Color(238, 238, 238))) {
+                JOptionPane.showMessageDialog(this, "Debes seleccionar un color.", "Campo requerido", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            if (imagenSeleccionadaBuffered == null || nombreImagenTemporal == null) {
+                JOptionPane.showMessageDialog(this, "Debes seleccionar una imagen para la variante.", "Campo requerido", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Guardar imagen solo aquí
+            try {
+                File carpetaDestino = new File("imagenes/variantesProductos/");
+                if (!carpetaDestino.exists()) {
+                    carpetaDestino.mkdirs();
+                }
+
+                File destino = new File(carpetaDestino, nombreImagenTemporal);
+                ImageIO.write(imagenSeleccionadaBuffered, "png", destino);
+                imagen = "/variantesProductos/" + nombreImagenTemporal;
+
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, "Error al guardar la imagen: " + e.getMessage());
+                return;
+            }
+
+            String hexColor = String.format("#%02x%02x%02x",
+                    btnColor.getBackground().getRed(),
+                    btnColor.getBackground().getGreen(),
+                    btnColor.getBackground().getBlue());
 
             VarianteProductoDTO dtoActualizado = new VarianteProductoDTO(
-                    txtCodigoBarras1.getText().trim(), // Código de barras no editable
-                    variante.getStock(), // Stock fijo
+                    txtCodigoBarras1.getText().trim(),
+                    variante.getStock(),
                     precioCompra,
                     talla,
                     hexColor,
@@ -495,19 +527,20 @@ public class PnlVarianteProducto extends javax.swing.JPanel {
 
             varianteNegocio.actualizarVariante(dtoActualizado);
 
-            javax.swing.JOptionPane.showMessageDialog(this, "Variante actualizada correctamente.");
+            JOptionPane.showMessageDialog(this, "Variante actualizada correctamente.");
             btnEditar.setText("Editar");
             btnConfirmar1.setEnabled(false);
 
-            // Deshabilitar campos de nuevo
+            // Desactivar edición
             txtPrecioCompra.setEditable(false);
             txtPrecioVenta.setEditable(false);
             txtTalla.setEditable(false);
             btnColor.setEnabled(false);
             btnAgregarImagen.setEnabled(false);
         } catch (Exception ex) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Error al actualizar: " + ex.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error al actualizar: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             ex.printStackTrace();
+
         }    }//GEN-LAST:event_btnConfirmar1ActionPerformed
 
 

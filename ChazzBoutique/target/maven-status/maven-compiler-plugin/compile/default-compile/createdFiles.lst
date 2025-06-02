@@ -55,6 +55,7 @@ presentacion\PanelHome$5.class
 presentacion\FrmPrincipal.class
 presentacion\PanelVenta$7.class
 presentacion\PnlAnadirVarianteProducto$1.class
+presentacion\PnlAnadirCategoria$7.class
 presentacion\PanelVenta$13.class
 presentacion\PnlAnadirProducto$5.class
 utils\BotonToggle.class
