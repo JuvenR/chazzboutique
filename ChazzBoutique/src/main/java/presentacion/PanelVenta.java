@@ -35,6 +35,10 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Desktop;
 import java.awt.Dimension;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -101,6 +105,8 @@ public class PanelVenta extends javax.swing.JPanel {
     private List<String> filaCodigos = new ArrayList<>();
     private File ultimoTicketGenerado = null;
     private boolean busquedaPorNombre = false;
+    private boolean usuarioCambioCombo = false;
+    private boolean dialogoCerradoSinSeleccion = false;
 
     public PanelVenta(FrmPrincipal frmPrincipal) {
         initComponents();
@@ -112,7 +118,7 @@ public class PanelVenta extends javax.swing.JPanel {
         cargarNombresProductos();
         configurarBusquedaToggle();
         btnAplicarDescuento.setEnabled(false);
-        
+
         // En el constructor, después de inicializar el spinner:
         spnCantidad.setModel(new SpinnerNumberModel(1, 1, 100, 1)); // Valores de 1 a 100, incremento de 1
         // En el constructor, después de inicializar el spinner:
@@ -124,7 +130,7 @@ public class PanelVenta extends javax.swing.JPanel {
             } else {
                 btnAgregar.setEnabled(false);
             }
-            
+
         });
 
 // Configurar el editor del spinner para capturar Enter
@@ -132,6 +138,12 @@ public class PanelVenta extends javax.swing.JPanel {
         editor.getTextField().addActionListener(e -> {
             if (btnAgregar.isEnabled()) {
                 agregarProductoATabla();
+            }
+        });
+        cbNombreProducto.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                usuarioCambioCombo = true;
             }
         });
         String[] columnNames = {"NOMBRE PRODUCTO", "CANTIDAD", "PRECIO UNITARIO", "SUBTOTAL"};
@@ -292,11 +304,15 @@ public class PanelVenta extends javax.swing.JPanel {
         // En el constructor, modificar el ActionListener del combo box:
         // En el constructor:
         cbNombreProducto.addActionListener(e -> {
-            if (!busquedaPorNombre || e.getActionCommand() == null || !e.getActionCommand().equals("comboBoxChanged")) {
+            // Solo procesar si fue un cambio iniciado por el usuario
+            // y no fue un cierre sin selección
+            if (!busquedaPorNombre || !usuarioCambioCombo || dialogoCerradoSinSeleccion) {
                 return;
             }
 
-            // Solo procesar si el usuario seleccionó un ítem explícitamente
+            // Restablecer bandera
+            usuarioCambioCombo = false;
+
             Object selected = cbNombreProducto.getSelectedItem();
             if (selected != null && !selected.toString().isEmpty()) {
                 buscarVariantesPorNombre();
@@ -316,20 +332,27 @@ public class PanelVenta extends javax.swing.JPanel {
     }
 
     private void buscarVariantesPorNombre() {
-        String nombreSeleccionado = (String) cbNombreProducto.getSelectedItem();
+        String nombre = ((JTextField) cbNombreProducto.getEditor().getEditorComponent())
+                .getText().trim();
+
+        if (nombre.isEmpty()) {
+            return;
+        }
 
         try {
-            List<ProductoDTO> productos = frmPrincipal.getProductoNegocio().buscarPorNombre(nombreSeleccionado);
-
+            List<ProductoDTO> productos = frmPrincipal.getProductoNegocio().buscarPorNombre(nombre);
             if (productos.isEmpty()) {
                 JOptionPane.showMessageDialog(this,
-                        "No se encontraron variantes para este producto",
+                        "No se encontraron productos con ese nombre",
                         "Búsqueda",
                         JOptionPane.INFORMATION_MESSAGE);
                 return;
             }
 
+            // Abrir diálogo solo al ejecutar esta acción (botón o Enter)
             mostrarDialogoVariantes(productos);
+            cbNombreProducto.hidePopup();
+
         } catch (NegocioException ex) {
             JOptionPane.showMessageDialog(this,
                     "Error en búsqueda: " + ex.getMessage(),
@@ -358,16 +381,29 @@ public class PanelVenta extends javax.swing.JPanel {
 
                 @Override
                 public void insertUpdate(DocumentEvent e) {
+                    if (dialogoCerradoSinSeleccion) {
+                        return; // No hacer nada si se cerró sin selección
+                    }
+                    usuarioCambioCombo = true;
                     scheduleFilter();
                 }
 
                 @Override
                 public void removeUpdate(DocumentEvent e) {
+                    if (dialogoCerradoSinSeleccion) {
+                        dialogoCerradoSinSeleccion = false; // Resetear después de borrar
+                        return;
+                    }
+                    usuarioCambioCombo = true;
                     scheduleFilter();
                 }
 
                 @Override
                 public void changedUpdate(DocumentEvent e) {
+                    if (dialogoCerradoSinSeleccion) {
+                        return;
+                    }
+                    usuarioCambioCombo = true;
                     scheduleFilter();
                 }
 
@@ -376,14 +412,15 @@ public class PanelVenta extends javax.swing.JPanel {
                         timer.stop();
                     }
                     timer = new Timer(300, evt -> {
-                        filterComboBox();
+                        if (usuarioCambioCombo && !dialogoCerradoSinSeleccion) {
+                            filterComboBox();
+                        }
                         timer.stop();
                     });
                     timer.setRepeats(false);
                     timer.start();
                 }
             });
-
             // Cargar todos los items inicialmente
             nombresProductos.forEach(cbNombreProducto::addItem);
             cbNombreProducto.setSelectedIndex(-1);
@@ -956,10 +993,9 @@ public class PanelVenta extends javax.swing.JPanel {
         }
 
         try {
-            // Verificar si el producto ya está en la venta
-
             // Buscar la variante del producto
-            VarianteProductoDTO variante = frmPrincipal.getVarianteProductoNegocio().obtenerVariantePorCodigoBarra(codigo);
+            VarianteProductoDTO variante = frmPrincipal.getVarianteProductoNegocio()
+                    .obtenerVariantePorCodigoBarra(codigo);
 
             if (variante == null) {
                 JOptionPane.showMessageDialog(this,
@@ -996,22 +1032,27 @@ public class PanelVenta extends javax.swing.JPanel {
             txtPrecio.setText(formatoMoneda(variante.getPrecioVenta()));
             spnCantidad.setValue(1);
 
-            // Configurar color
+            // Configurar color del botón
             if (variante.getColor() != null && !variante.getColor().isEmpty()) {
                 try {
-                    Color color = Color.decode(variante.getColor());
-                    btnColor.setBackground(color);
+                    // Intentar decodificar color hexadecimal (#RRGGBB)
+                    btnColor.setBackground(Color.decode(variante.getColor()));
                 } catch (NumberFormatException e) {
                     try {
-                        Color color = (Color) Color.class.getField(variante.getColor().toUpperCase()).get(null);
-                        btnColor.setBackground(color);
+                        // Intentar color por nombre (RED, BLUE, etc.)
+                        btnColor.setBackground((Color) Color.class.getField(variante.getColor().toUpperCase()).get(null));
                     } catch (Exception ex) {
+                        // Si falla, poner blanco
                         btnColor.setBackground(Color.WHITE);
                     }
                 }
             } else {
                 btnColor.setBackground(Color.WHITE);
             }
+
+            // Forzar que se vea el color
+            btnColor.setOpaque(true);
+            btnColor.repaint();
 
             habilitarCampos(true);
 
@@ -1680,7 +1721,7 @@ public class PanelVenta extends javax.swing.JPanel {
         txtPrecio.setEnabled(false);
         spnCantidad.setEnabled(habilitar);
         btnAgregar.setEnabled(habilitar); // Habilitar el botón de agregar
-        btnColor.setEnabled(false);
+        btnColor.setEnabled(true);
 
         // Mantener habilitados según modo búsqueda
         txtCodigo.setEnabled(!busquedaPorNombre);
@@ -1826,7 +1867,9 @@ public class PanelVenta extends javax.swing.JPanel {
     // Clase interna para filtrar números y puntos
 
     private void buscarProductoPorNombre() {
-        String nombre = cbNombreProducto.getSelectedItem().toString();
+        String nombre = ((JTextField) cbNombreProducto.getEditor().getEditorComponent())
+                .getText().trim();
+
         if (nombre.isEmpty()) {
             return;
         }
@@ -1841,7 +1884,9 @@ public class PanelVenta extends javax.swing.JPanel {
                 return;
             }
 
+            // Abrir diálogo solo al ejecutar esta acción (botón o Enter)
             mostrarDialogoVariantes(productos);
+
         } catch (NegocioException ex) {
             JOptionPane.showMessageDialog(this,
                     "Error en búsqueda: " + ex.getMessage(),
@@ -1853,6 +1898,8 @@ public class PanelVenta extends javax.swing.JPanel {
     private void mostrarDialogoVariantes(List<ProductoDTO> productos) {
         JDialog dialog = new JDialog(frmPrincipal, true);
         dialog.setTitle("Variantes de: " + cbNombreProducto.getSelectedItem());
+
+        dialogoCerradoSinSeleccion = false;
 
         DefaultTableModel model = new DefaultTableModel() {
             @Override
@@ -1913,17 +1960,48 @@ public class PanelVenta extends javax.swing.JPanel {
             dialog.dispose();
         });
 
+        JButton btnCancelar = new JButton("Cancelar");
+        btnCancelar.addActionListener(e -> {
+            dialogoCerradoSinSeleccion = true; // Marcar que se cerró sin selección
+            dialog.dispose();
+            limpiarSeleccionCombo(); // Limpiar la selección
+        });
+
         JPanel buttonPanel = new JPanel();
+        buttonPanel.add(btnCancelar);
         buttonPanel.add(btnAceptar);
 
+        dialog.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                // Esto se ejecuta cuando se hace clic en la "X"
+                dialogoCerradoSinSeleccion = true;
+                limpiarSeleccionCombo();
+                limpiarCampos();
+
+            }
+
+            @Override
+            public void windowClosed(WindowEvent e) {
+                // Esto se ejecuta después de que el diálogo se ha cerrado
+                if (dialogoCerradoSinSeleccion) {
+                    limpiarSeleccionCombo();
+                    limpiarCampos();
+                }
+            }
+        });
         dialog.setLayout(new BorderLayout());
         dialog.add(new JScrollPane(table), BorderLayout.CENTER);
         dialog.add(buttonPanel, BorderLayout.SOUTH);
 
+        dialog.setAlwaysOnTop(true); // Asegura que esté sobre otros componentes
         dialog.pack();
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
-        
+        dialog.toFront();
+        dialog.requestFocus();
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+
     }
 
     private void cargarVarianteSeleccionada(String codigo) {
@@ -1936,10 +2014,13 @@ public class PanelVenta extends javax.swing.JPanel {
             // Actualizar interfaz
             txtCodigo.setText(codigo);
             txtPrecio.setText(formatoMoneda(variante.getPrecioVenta()));
+            System.out.println("Color variante: '" + variante.getColor() + "'");
 
             // Configurar color
             try {
                 btnColor.setBackground(Color.decode(variante.getColor()));
+                btnColor.setOpaque(true);
+                btnColor.repaint();
             } catch (Exception e) {
                 btnColor.setBackground(Color.WHITE);
             }
@@ -1957,11 +2038,17 @@ public class PanelVenta extends javax.swing.JPanel {
     }
 
     private void limpiarSeleccionCombo() {
+        // Desactivar temporalmente la detección de cambios del usuario
+        usuarioCambioCombo = false;
+
         SwingUtilities.invokeLater(() -> {
             cbNombreProducto.setSelectedIndex(-1);
             JTextField editor = (JTextField) cbNombreProducto.getEditor().getEditorComponent();
             editor.setText("");
             cbNombreProducto.hidePopup();
+
+            // Restablecer detección para futuras interacciones
+            usuarioCambioCombo = true;
         });
     }
 

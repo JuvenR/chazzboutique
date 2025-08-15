@@ -63,10 +63,10 @@ public class PnlVarianteProducto extends javax.swing.JPanel {
         txtPrecioCompra.setEditable(false);
         txtPrecioVenta.setEditable(false);
         txtTalla.setEditable(false);
-        btnColor.setEnabled(true); // Siempre habilitado visualmente
+        btnColor.setEnabled(true);
         btnGenerarCodigoBarras.setEnabled(false);
-        btnEditar.setEnabled(true); // Esto sí lo puedes dejar activado para permitir edición si deseas
-        btnConfirmar1.setEnabled(false); // O activarlo solo si presionan "Editar"
+        btnEditar.setEnabled(true);
+        btnConfirmar1.setEnabled(false);
         btnAgregarImagen.setEnabled(false);
 
         jLabel1.setText(capitalizarNombre(variante.getNombreProducto()));
@@ -491,31 +491,31 @@ public class PnlVarianteProducto extends javax.swing.JPanel {
                 return;
             }
 
-            if (imagenSeleccionadaBuffered == null || nombreImagenTemporal == null) {
-                JOptionPane.showMessageDialog(this, "Debes seleccionar una imagen para la variante.", "Campo requerido", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            // Guardar imagen solo aquí
-            try {
-                File carpetaDestino = new File("imagenes/variantesProductos/");
-                if (!carpetaDestino.exists()) {
-                    carpetaDestino.mkdirs();
-                }
-
-                File destino = new File(carpetaDestino, nombreImagenTemporal);
-                ImageIO.write(imagenSeleccionadaBuffered, "png", destino);
-                imagen = "/variantesProductos/" + nombreImagenTemporal;
-
-            } catch (IOException e) {
-                JOptionPane.showMessageDialog(this, "Error al guardar la imagen: " + e.getMessage());
-                return;
-            }
-
             String hexColor = String.format("#%02x%02x%02x",
                     btnColor.getBackground().getRed(),
                     btnColor.getBackground().getGreen(),
                     btnColor.getBackground().getBlue());
+
+            // Usar la imagen actual por defecto
+            String nuevaRutaImagen = variante.getUrlImagen();
+
+            // Si el usuario seleccionó una nueva imagen, se guarda
+            if (imagenSeleccionadaBuffered != null && nombreImagenTemporal != null) {
+                try {
+                    File carpetaDestino = new File("imagenes/variantesProductos/");
+                    if (!carpetaDestino.exists()) {
+                        carpetaDestino.mkdirs();
+                    }
+
+                    File destino = new File(carpetaDestino, nombreImagenTemporal);
+                    ImageIO.write(imagenSeleccionadaBuffered, "png", destino);
+                    nuevaRutaImagen = "/variantesProductos/" + nombreImagenTemporal;
+
+                } catch (IOException e) {
+                    JOptionPane.showMessageDialog(this, "Error al guardar la imagen: " + e.getMessage());
+                    return;
+                }
+            }
 
             VarianteProductoDTO dtoActualizado = new VarianteProductoDTO(
                     txtCodigoBarras1.getText().trim(),
@@ -528,7 +528,7 @@ public class PnlVarianteProducto extends javax.swing.JPanel {
             );
             dtoActualizado.setId(variante.getId());
             dtoActualizado.setNombreProducto(variante.getNombreProducto());
-            dtoActualizado.setUrlImagen(imagen);
+            dtoActualizado.setUrlImagen(nuevaRutaImagen);
 
             varianteNegocio.actualizarVariante(dtoActualizado);
 
@@ -545,6 +545,7 @@ public class PnlVarianteProducto extends javax.swing.JPanel {
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Error al actualizar: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             ex.printStackTrace();
+
 
         }    }//GEN-LAST:event_btnConfirmar1ActionPerformed
 

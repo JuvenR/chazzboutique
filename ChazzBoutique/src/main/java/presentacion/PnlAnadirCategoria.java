@@ -38,9 +38,8 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
     private FrmPrincipal frmPrincipal;
     private DefaultTableModel tableModel;
     private CategoriaDTO categoriaSeleccionada;
-    private String imagen;
     private BufferedImage imagenSeleccionadaBuffered;
-    private String nombreImagenTemporal;
+    private String rutaImagenSeleccionada; // ruta final de la imagen
 
     public PnlAnadirCategoria(FrmPrincipal frmPrincipal) {
         initComponents();
@@ -48,7 +47,11 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
         this.setSize(new Dimension(1701, 1080));
 
         lblImagen.setPreferredSize(new Dimension(480, 600));
+        configurarTabla();
+        cargarCategorias();
+    }
 
+    private void configurarTabla() {
         tableModel = new DefaultTableModel(new Object[]{"ID", "Nombre", "Descripción", "Imagen", "Editar", "Eliminar"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -57,23 +60,14 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
         };
         tblCategorias.setModel(tableModel);
 
-        tblCategorias.setDefaultRenderer(Object.class, new javax.swing.table.DefaultTableCellRenderer() {
-            @Override
-            public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value,
-                    boolean isSelected, boolean hasFocus, int row, int column) {
-
-                // Llama al renderizado por defecto
-                java.awt.Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
-                // Verifica si es texto y no un botón (como "Editar" o "Eliminar")
-                if (value instanceof String && column != 4 && column != 5) {
-                    String textoOriginal = (String) value;
-                    String textoFormateado = formatearTitulo(textoOriginal);
-                    setText(textoFormateado);
-                }
-
-                return c;
+        tblCategorias.setDefaultRenderer(Object.class, (table, value, isSelected, hasFocus, row, column) -> {
+            java.awt.Component c = new javax.swing.table.DefaultTableCellRenderer()
+                    .getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if (value instanceof String && column != 4 && column != 5) {
+                String textoOriginal = (String) value;
+                ((javax.swing.JLabel) c).setText(formatearTitulo(textoOriginal));
             }
+            return c;
         });
 
         tblCategorias.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -87,31 +81,25 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
         });
 
         tblCategorias.setRowHeight(40);
-
         JTableHeader header = tblCategorias.getTableHeader();
-        header.setFont(new java.awt.Font("Segoe UI", Font.BOLD, 20));
+        header.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 20));
         header.setForeground(Color.WHITE);
         header.setBackground(Color.BLACK);
         header.setPreferredSize(new Dimension(header.getWidth(), 35));
+
         tblCategorias.getColumn("Editar").setCellRenderer(new ButtonRenderer("Editar"));
         tblCategorias.getColumn("Eliminar").setCellRenderer(new ButtonRenderer("Eliminar"));
         tblCategorias.getColumn("Editar").setCellEditor(new ButtonEditor(new JCheckBox(), "Editar", this::editarCategoria));
         tblCategorias.getColumn("Eliminar").setCellEditor(new ButtonEditor(new JCheckBox(), "Eliminar", this::eliminarCategoria));
-        cargarCategorias();
     }
 
     private void guardarCategoria() {
         String nombre = txtNombreCategoria.getText().trim();
         String descripcion = txtDescripcion.getText().trim();
-        String rutaImagenFinal = " ";
 
-        if (imagenSeleccionadaBuffered == null && categoriaSeleccionada == null) {
+        if ((imagenSeleccionadaBuffered == null && categoriaSeleccionada == null)
+                || (imagenSeleccionadaBuffered == null && categoriaSeleccionada != null && rutaImagenSeleccionada == null)) {
             JOptionPane.showMessageDialog(this, "Debes seleccionar una imagen.");
-            return;
-        }
-
-        if (imagenSeleccionadaBuffered == null && categoriaSeleccionada != null && this.imagen == null) {
-            JOptionPane.showMessageDialog(this, "Esta categoría no tiene imagen. Selecciona una imagen para continuar.");
             return;
         }
 
@@ -121,61 +109,43 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
         }
 
         // Procesar imagen seleccionada si existe
-        if (imagenSeleccionadaBuffered != null && nombreImagenTemporal != null) {
+        if (imagenSeleccionadaBuffered != null) {
             try {
                 File carpetaDestino = new File("imagenes/categorias/");
                 if (!carpetaDestino.exists()) {
                     carpetaDestino.mkdirs();
                 }
 
-                File destino = new File(carpetaDestino, nombreImagenTemporal);
+                // Generar nombre seguro para archivo basado en el nombre de la categoría
+                String nombreBase = nombre.toLowerCase().replaceAll("[^a-z0-9]", "_");
+                File destino = new File(carpetaDestino, "categoria_" + nombreBase + ".png");
 
-// Si ya existe un archivo con ese nombre, generar uno nuevo único
+                // Si ya existe un archivo con ese nombre, agregar sufijo numérico
                 int contador = 1;
                 while (destino.exists()) {
-                    String nombreBase = nombreImagenTemporal.substring(0, nombreImagenTemporal.lastIndexOf('.'));
-                    String extension = nombreImagenTemporal.substring(nombreImagenTemporal.lastIndexOf('.') + 1);
-                    String nuevoNombre = nombreBase + "_" + contador + "." + extension;
-                    destino = new File(carpetaDestino, nuevoNombre);
+                    destino = new File(carpetaDestino, "categoria_" + nombreBase + "_" + contador + ".png");
                     contador++;
                 }
+
+                // Guardar imagen
                 ImageIO.write(imagenSeleccionadaBuffered, "png", destino);
-                imagen = "/categorias/" + destino.getName();
+                rutaImagenSeleccionada = "/categorias/" + destino.getName(); // ruta final
 
             } catch (IOException ex) {
                 JOptionPane.showMessageDialog(this, "Error al guardar la imagen: " + ex.getMessage());
+                return;
             }
-        } else if (this.imagen != null) {
-            rutaImagenFinal = this.imagen;
         }
 
         try {
             if (categoriaSeleccionada == null) {
-                CategoriaDTO dto = new CategoriaDTO(null, nombre, descripcion, rutaImagenFinal);
+                CategoriaDTO dto = new CategoriaDTO(null, nombre, descripcion, rutaImagenSeleccionada);
                 frmPrincipal.getCategoriaNegocio().crearCategoria(dto);
                 JOptionPane.showMessageDialog(this, "Categoría registrada.");
             } else {
-                // Verificar que la categoría seleccionada aún existe
-                boolean existe = false;
-                List<CategoriaDTO> categorias = frmPrincipal.getCategoriaNegocio().obtenerCategorias();
-                for (CategoriaDTO cat : categorias) {
-                    if (cat.getId().equals(categoriaSeleccionada.getId())) {
-                        existe = true;
-                        break;
-                    }
-                }
-
-                if (!existe) {
-                    JOptionPane.showMessageDialog(this, "La categoría seleccionada ya no existe.");
-                    categoriaSeleccionada = null;
-                    limpiarFormulario();
-                    cargarCategorias();
-                    return;
-                }
-
                 categoriaSeleccionada.setNombreCategoria(nombre);
                 categoriaSeleccionada.setDescripcionCategoria(descripcion);
-                categoriaSeleccionada.setImagenCategoria(rutaImagenFinal);
+                categoriaSeleccionada.setImagenCategoria(rutaImagenSeleccionada);
                 frmPrincipal.getCategoriaNegocio().actualizarCategoria(categoriaSeleccionada);
                 JOptionPane.showMessageDialog(this, "Categoría actualizada.");
                 categoriaSeleccionada = null;
@@ -183,10 +153,6 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
 
             limpiarFormulario();
             cargarCategorias();
-
-            // Limpiar imagen temporal
-            imagenSeleccionadaBuffered = null;
-            nombreImagenTemporal = null;
 
         } catch (NegocioException e) {
             JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
@@ -197,10 +163,8 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
         String[] palabras = texto.trim().toLowerCase().split("\\s+");
         StringBuilder sb = new StringBuilder();
         for (String palabra : palabras) {
-            if (palabra.length() > 0) {
-                sb.append(Character.toUpperCase(palabra.charAt(0)));
-                sb.append(palabra.substring(1));
-                sb.append(" ");
+            if (!palabra.isEmpty()) {
+                sb.append(Character.toUpperCase(palabra.charAt(0))).append(palabra.substring(1)).append(" ");
             }
         }
         return sb.toString().trim();
@@ -211,15 +175,10 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
         fileChooser.setDialogTitle("Seleccionar Imagen");
         fileChooser.setFileFilter(new FileNameExtensionFilter("Imágenes", "jpg", "jpeg", "png", "gif"));
 
-        int resultado = fileChooser.showOpenDialog(this);
-        if (resultado == JFileChooser.APPROVE_OPTION) {
-            File imagenSeleccionada = fileChooser.getSelectedFile();
-
+        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File archivo = fileChooser.getSelectedFile();
             try {
-                BufferedImage ropa = ImageIO.read(imagenSeleccionada);
-                nombreImagenTemporal = imagenSeleccionada.getName();
-
-                // Cargar el marco
+                BufferedImage ropa = ImageIO.read(archivo);
                 URL marcoURL = getClass().getResource("/images/marco_chazz.png");
                 if (marcoURL == null) {
                     JOptionPane.showMessageDialog(this, "No se encontró el marco.");
@@ -227,24 +186,19 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
                 }
                 BufferedImage marco = ImageIO.read(marcoURL);
 
-                // Escalar y combinar
                 Image ropaEscalada = ropa.getScaledInstance(marco.getWidth(), marco.getHeight(), Image.SCALE_SMOOTH);
                 BufferedImage ropaFinal = new BufferedImage(marco.getWidth(), marco.getHeight(), BufferedImage.TYPE_INT_RGB);
                 Graphics2D g2 = ropaFinal.createGraphics();
                 g2.drawImage(ropaEscalada, 0, 0, null);
                 g2.dispose();
 
-                imagenSeleccionadaBuffered = aplicarMarco(ropaFinal, marco); // Solo la guardamos en memoria
-
-                // Mostrar previsualización
+                imagenSeleccionadaBuffered = aplicarMarco(ropaFinal, marco);
                 Image img = imagenSeleccionadaBuffered.getScaledInstance(lblImagen.getWidth(), lblImagen.getHeight(), Image.SCALE_SMOOTH);
                 lblImagen.setIcon(new ImageIcon(img));
                 lblImagen.setText("");
-
             } catch (IOException e) {
                 JOptionPane.showMessageDialog(this, "Error al procesar la imagen: " + e.getMessage());
             }
-
         }
     }
 
@@ -272,29 +226,15 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
         try {
             for (CategoriaDTO cat : frmPrincipal.getCategoriaNegocio().obtenerCategorias()) {
                 if (cat.getId().equals(id)) {
-                    this.categoriaSeleccionada = cat;
+                    categoriaSeleccionada = cat;
                     txtNombreCategoria.setText(cat.getNombreCategoria());
                     txtDescripcion.setText(cat.getDescripcionCategoria());
-
-                    String ruta = cat.getImagenCategoria();
-                    if (ruta != null && !ruta.isEmpty()) {
-                        this.imagen = ruta;
-
-                        if (lblImagen.getWidth() > 0 && lblImagen.getHeight() > 0) {
-                            cargarImagenEnLabel(ruta);
-                        } else {
-                            lblImagen.addComponentListener(new ComponentAdapter() {
-                                @Override
-                                public void componentResized(ComponentEvent e) {
-                                    cargarImagenEnLabel(ruta);
-                                    lblImagen.removeComponentListener(this);
-                                }
-                            });
-                        }
+                    rutaImagenSeleccionada = cat.getImagenCategoria();
+                    if (rutaImagenSeleccionada != null && !rutaImagenSeleccionada.isEmpty()) {
+                        cargarImagenEnLabel(rutaImagenSeleccionada);
                     } else {
                         lblImagen.setIcon(null);
                         lblImagen.setText("");
-                        this.imagen = null;
                     }
                     break;
                 }
@@ -305,17 +245,11 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
     }
 
     private void cargarImagenEnLabel(String rutaRelativa) {
-        File archivoImagen = new File("imagenes/" + rutaRelativa);
-        if (archivoImagen.exists()) {
-            ImageIcon icon = new ImageIcon(archivoImagen.getAbsolutePath());
-            Image originalImage = icon.getImage();
-
-            // Escalado con mejor calidad
-            int width = 480;
-            int height = 600;
-            Image scaledImage = getHighQualityScaledImage(originalImage, width, height);
-
-            lblImagen.setIcon(new ImageIcon(scaledImage));
+        File archivo = new File("imagenes/" + rutaRelativa);
+        if (archivo.exists()) {
+            ImageIcon icon = new ImageIcon(archivo.getAbsolutePath());
+            Image scaled = getHighQualityScaledImage(icon.getImage(), 480, 600);
+            lblImagen.setIcon(new ImageIcon(scaled));
         } else {
             lblImagen.setIcon(null);
         }
@@ -323,17 +257,13 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
 
     private void eliminarCategoria(int row) {
         Long id = (Long) tableModel.getValueAt(row, 0);
-        int confirm = JOptionPane.showConfirmDialog(this, "¿Eliminar esta categoría?", "Confirmar", JOptionPane.YES_NO_OPTION);
-        if (confirm == JOptionPane.YES_OPTION) {
+        if (JOptionPane.showConfirmDialog(this, "¿Eliminar esta categoría?", "Confirmar", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
             try {
                 frmPrincipal.getCategoriaNegocio().eliminarCategoria(id);
-
-                // Verificar si la categoría eliminada es la misma que está seleccionada
                 if (categoriaSeleccionada != null && categoriaSeleccionada.getId().equals(id)) {
                     categoriaSeleccionada = null;
                     limpiarFormulario();
                 }
-
                 cargarCategorias();
             } catch (NegocioException e) {
                 JOptionPane.showMessageDialog(this, "No se puede eliminar la categoría: elimine primero los productos relacionados.");
@@ -345,16 +275,15 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
         categoriaSeleccionada = null;
         txtNombreCategoria.setText("");
         txtDescripcion.setText("");
-        this.imagen = null;
-        // Cargar imagen por defecto desde resources
+        rutaImagenSeleccionada = null;
+        imagenSeleccionadaBuffered = null;
         URL url = getClass().getResource("/images/1.png");
         if (url != null) {
             ImageIcon icon = new ImageIcon(url);
-            Image img = icon.getImage().getScaledInstance(480, 600, Image.SCALE_SMOOTH); // ajusta dimensiones si necesitas
+            Image img = icon.getImage().getScaledInstance(480, 600, Image.SCALE_SMOOTH);
             lblImagen.setIcon(new ImageIcon(img));
         } else {
-            System.err.println("No se encontró la imagen /images/1.png");
-            lblImagen.setIcon(null); // Limpia el ícono si no se encuentra
+            lblImagen.setIcon(null);
         }
     }
 
@@ -362,18 +291,15 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
         if (ruta == null || ruta.isEmpty()) {
             return "";
         }
-        return new File(ruta).getName(); // obtiene solo 'imagen.png'
+        return new File(ruta).getName();
     }
 
     private BufferedImage aplicarMarco(BufferedImage base, BufferedImage marco) {
-        BufferedImage combinado = new BufferedImage(
-                base.getWidth(), base.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        BufferedImage combinado = new BufferedImage(base.getWidth(), base.getHeight(), BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = combinado.createGraphics();
-
         g.drawImage(base, 0, 0, null);
-        g.drawImage(marco, 0, 0, base.getWidth(), base.getHeight(), null); // Ajustamos tamaño
+        g.drawImage(marco, 0, 0, base.getWidth(), base.getHeight(), null);
         g.dispose();
-
         return combinado;
     }
 

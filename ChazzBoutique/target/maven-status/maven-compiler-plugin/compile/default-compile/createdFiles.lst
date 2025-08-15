@@ -45,7 +45,6 @@ presentacion\PnlAnadirVarianteProducto$7.class
 utils\ButtonEditor.class
 presentacion\PnlProductoParaVariante$1.class
 presentacion\FrmPrincipal$4.class
-presentacion\PnlAnadirCategoria$6.class
 presentacion\PanelHome$6.class
 presentacion\PanelCategoriaProducto$3.class
 presentacion\PnlVarianteProducto$4.class
@@ -55,7 +54,6 @@ presentacion\PanelHome$5.class
 presentacion\FrmPrincipal.class
 presentacion\PanelVenta$7.class
 presentacion\PnlAnadirVarianteProducto$1.class
-presentacion\PnlAnadirCategoria$7.class
 presentacion\PanelVenta$13.class
 presentacion\PnlAnadirProducto$5.class
 utils\BotonToggle.class
@@ -63,6 +61,7 @@ presentacion\PanelHome$11.class
 presentacion\PnlAnadirVarianteProducto$8.class
 presentacion\PanelCategoriaProducto$17.class
 presentacion\PanelCategoriaProducto$9.class
+presentacion\PanelVenta$16.class
 utils\ScrollBar.class
 presentacion\FrmPrincipal$3.class
 presentacion\PanelCategoriaProducto$2.class
@@ -104,6 +103,7 @@ presentacion\PanelHome.class
 utils\BotonToggle$1.class
 presentacion\PanelCategoriaProducto$14.class
 presentacion\PnlReporte$3.class
+presentacion\PanelVenta$17.class
 presentacion\PanelVenta$10.class
 presentacion\PnlAnadirVarianteProducto.class
 presentacion\PnlReporte$ColorCellRenderer.class
