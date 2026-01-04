@@ -115,19 +115,22 @@ public class VarianteProductoNegocio implements IVarianteProductoNegocio {
                 variante.getTalla(),
                 variante.getColor(),
                 variante.getPrecioVenta(),
-                variante.getProducto().getId()
+                variante.getProducto().getId(),
+                variante.getUrlImagen()
         );
         dto.setId(variante.getId());
         return dto;
     }
 
     private void llenarEntidadDesdeDTO(VarianteProducto entidad, VarianteProductoDTO dto) {
+        System.out.println(dto);
         entidad.setCodigoBarra(dto.getCodigoBarra());
         entidad.setStock(dto.getStock());
         entidad.setPrecioCompra(dto.getPrecioCompra());
         entidad.setPrecioVenta(dto.getPrecioVenta());
         entidad.setTalla(dto.getTalla());
         entidad.setColor(dto.getColor());
+        entidad.setUrlImagen(dto.getUrlImagen());
     }
 
     @Override
@@ -144,7 +147,8 @@ public class VarianteProductoNegocio implements IVarianteProductoNegocio {
                         variante.getTalla(),
                         variante.getColor(),
                         variante.getPrecioVenta(),
-                        variante.getProducto().getId()
+                        variante.getProducto().getId(),
+                        variante.getUrlImagen()
                 );
 
                 dto.setId(variante.getId());

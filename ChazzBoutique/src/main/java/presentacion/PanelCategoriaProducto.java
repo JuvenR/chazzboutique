@@ -7,9 +7,9 @@ package presentacion;
 import com.mycompany.chazzboutiquenegocio.dtos.CategoriaDTO;
 import com.mycompany.chazzboutiquenegocio.dtos.VarianteProductoDTO;
 import com.mycompany.chazzboutiquenegocio.excepciones.NegocioException;
-import com.mycompany.chazzboutiquenegocio.interfacesObjetosNegocio.IVarianteProductoNegocio;
 import java.awt.Color;
 import java.awt.Image;
+import java.io.File;
 import java.net.URL;
 import java.util.List;
 import java.util.logging.Level;
@@ -17,7 +17,6 @@ import java.util.logging.Logger;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import static utils.Capitalizador.capitalizarNombre;
 
@@ -28,16 +27,19 @@ import static utils.Capitalizador.capitalizarNombre;
 public class PanelCategoriaProducto extends javax.swing.JPanel {
 
     private FrmPrincipal frmPrincipal;
-    private IVarianteProductoNegocio varianteNegocio;
+    private CategoriaDTO categoriaSeleccionada;
+
     private int paginaActual = 1;
     private final int tamanoPagina = 12;
     private String filtroActual = "";
     private boolean hayMasPaginas = true;
     private List<VarianteProductoDTO> listaActualDeVariantes;
 
-    public PanelCategoriaProducto(FrmPrincipal frmPrincipal) {
+    public PanelCategoriaProducto(FrmPrincipal frmPrincipal, CategoriaDTO categoria) {
         initComponents();
         this.frmPrincipal = frmPrincipal;
+        this.categoriaSeleccionada = categoria;
+        this.lblTitulo.setText(capitalizarNombre(categoria.getNombreCategoria()));
         cargarVariantes(paginaActual, tamanoPagina, filtroActual);
         txtBuscador.addFocusListener(new java.awt.event.FocusAdapter() {
             @Override
@@ -86,16 +88,17 @@ public class PanelCategoriaProducto extends javax.swing.JPanel {
 
             List<JPanel> panelesArticulo = List.of(
                     panelArticulo1, panelArticulo2, panelArticulo3,
-                    panelArticulo4, panelArticulo5, panelArticulo6
+                    panelArticulo4, panelArticulo5, panelArticulo6, panelArticulo7, panelArticulo8, panelArticulo9, panelArticulo10, panelArticulo11, panelArticulo12
             );
 
-            List<VarianteProductoDTO> variantes = frmPrincipal.varianteProductoNegocio
-                    .buscarVariantesPorNombreProducto(filtro, pagina, tamañoPagina);
+            List<VarianteProductoDTO> variantes = frmPrincipal.getVarianteProductoNegocio()
+                    .buscarVariantesPorCategoriaYNombreProducto(this.categoriaSeleccionada.getId().intValue(), filtro, pagina, tamañoPagina);
             listaActualDeVariantes = variantes;
-            long total = frmPrincipal.varianteProductoNegocio.contarVariantesPorNombreProducto(filtroActual);
+            long total = frmPrincipal.getVarianteProductoNegocio()
+                    .contarVariantesPorCategoriaYNombreProducto(categoriaSeleccionada.getId().intValue(), filtro);
             lblArticulos.setText("Todos (" + total + " artículos)");
 
-            List<VarianteProductoDTO> siguientePagina = frmPrincipal.varianteProductoNegocio
+            List<VarianteProductoDTO> siguientePagina = frmPrincipal.getVarianteProductoNegocio()
                     .buscarVariantesPorNombreProducto(filtro, pagina + 1, tamañoPagina);
 
             hayMasPaginas = !siguientePagina.isEmpty();
@@ -104,31 +107,21 @@ public class PanelCategoriaProducto extends javax.swing.JPanel {
             List<JLabel> etiquetasTalla = List.of(lblTallaResult1, lblTallaResult2, lblTallaResult3, lblTallaResult4, lblTallaResult5, lblTallaResult6, lblTallaResult7, lblTallaResult8, lblTallaResult9, lblTallaResult10, lblTallaResult11, lblTallaResult12);
             List<JButton> botonesColor = List.of(btnColor1, btnColor2, btnColor3, btnColor4, btnColor5, btnColor6, btnColor7, btnColor8, btnColor9, btnColor10, btnColor11, btnColor12);
             List<JLabel> etiquetasImagen = List.of(lblImagenArticulo1, lblImagenArticulo2, lblImagenArticulo3, lblImagenArticulo4, lblImagenArticulo5, lblImagenArticulo6, lblImagenArticulo7, lblImagenArticulo8, lblImagenArticulo9, lblImagenArticulo10, lblImagenArticulo11, lblImagenArticulo12);
-            int limite = Math.min(tamañoPagina, panelesArticulo.size());
-            for (int i = 0; i < limite; i++) {
+
+            for (int i = 0; i < tamañoPagina; i++) {
                 if (i < variantes.size()) {
                     VarianteProductoDTO dto = variantes.get(i);
                     etiquetasNombre.get(i).setText(capitalizarNombre(dto.getNombreProducto()));
                     etiquetasTalla.get(i).setText(dto.getTalla());
                     botonesColor.get(i).setBackground(Color.decode(dto.getColor()));
-                    String urlImagen = dto.getUrlImagen();
-                    ImageIcon iconoEscalado;
-
-                    if (urlImagen != null) {
-                        URL url = getClass().getResource(urlImagen);
-                        if (url != null) {
-                            ImageIcon icon = new ImageIcon(url);
-                            iconoEscalado = new ImageIcon(icon.getImage().getScaledInstance(83, 123, Image.SCALE_SMOOTH));
-                        } else {
-                            System.out.println("⚠ Imagen no encontrada en recursos: " + urlImagen);
-                            iconoEscalado = getIconoPorDefecto();
-                        }
+                    File archivoImagen = new File("imagenes/" + dto.getUrlImagen());
+                    if (archivoImagen.exists()) {
+                        ImageIcon icon = new ImageIcon(archivoImagen.getAbsolutePath());
+                        Image img = icon.getImage().getScaledInstance(83, 123, Image.SCALE_SMOOTH);
+                        etiquetasImagen.get(i).setIcon(new ImageIcon(img));
                     } else {
-                        System.out.println("⚠ URL de imagen nula para producto: " + dto.getId());
-                        iconoEscalado = getIconoPorDefecto();
+                        etiquetasImagen.get(i).setIcon(null); // O una imagen por defecto si quieres
                     }
-
-                    etiquetasImagen.get(i).setIcon(iconoEscalado);
                     panelesArticulo.get(i).setVisible(true); // Mostrar panel
                 } else {
                     etiquetasNombre.get(i).setText("");
@@ -148,17 +141,6 @@ public class PanelCategoriaProducto extends javax.swing.JPanel {
         } catch (NegocioException ex) {
             lblArticulos.setText("Todos (0 artículos)");
 
-        }
-    }
-
-    private ImageIcon getIconoPorDefecto() {
-        URL defaultUrl = getClass().getResource("/images/no_image.png");
-        if (defaultUrl != null) {
-            ImageIcon icon = new ImageIcon(defaultUrl);
-            return new ImageIcon(icon.getImage().getScaledInstance(83, 123, Image.SCALE_SMOOTH));
-        } else {
-            System.out.println("⚠ Imagen por defecto no encontrada en /images/no_image.png");
-            return null;
         }
     }
 
@@ -1205,16 +1187,18 @@ public class PanelCategoriaProducto extends javax.swing.JPanel {
         lblArticulos.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
         lblArticulos.setText("Pantalones (125 articulos)");
 
-        btnRightPagina.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/right.png"))); // NOI18N
         btnRightPagina.setPreferredSize(new java.awt.Dimension(29, 259));
+        btnRightPagina.setSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/images/right.png"))); // NOI18N
+        btnRightPagina.setSimpleIcon(new javax.swing.ImageIcon(getClass().getResource("/images/right.png"))); // NOI18N
         btnRightPagina.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnRightPaginaActionPerformed(evt);
             }
         });
 
-        btnLeftPagina1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/left.png"))); // NOI18N
         btnLeftPagina1.setPreferredSize(new java.awt.Dimension(29, 259));
+        btnLeftPagina1.setSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/images/left.png"))); // NOI18N
+        btnLeftPagina1.setSimpleIcon(new javax.swing.ImageIcon(getClass().getResource("/images/left.png"))); // NOI18N
         btnLeftPagina1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnLeftPagina1ActionPerformed(evt);
@@ -1321,6 +1305,8 @@ public class PanelCategoriaProducto extends javax.swing.JPanel {
     private void btnRightPaginaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRightPaginaActionPerformed
         if (hayMasPaginas) {
             paginaActual++;
+            lblPagina1.setText("Pagina " + paginaActual);
+
             cargarVariantes(paginaActual, tamanoPagina, filtroActual);
         }
     }//GEN-LAST:event_btnRightPaginaActionPerformed
@@ -1328,6 +1314,7 @@ public class PanelCategoriaProducto extends javax.swing.JPanel {
     private void btnLeftPagina1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLeftPagina1ActionPerformed
         if (paginaActual > 1) {
             paginaActual--;
+            lblPagina1.setText("Pagina " + paginaActual);
             cargarVariantes(paginaActual, tamanoPagina, filtroActual);
         }
     }//GEN-LAST:event_btnLeftPagina1ActionPerformed
@@ -1340,73 +1327,73 @@ public class PanelCategoriaProducto extends javax.swing.JPanel {
 
     private void btnVer1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVer1ActionPerformed
         VarianteProductoDTO seleccionada = listaActualDeVariantes.get(0); // o el índice correspondiente
-        PnlVarianteProducto pnl = new PnlVarianteProducto(seleccionada, varianteNegocio, frmPrincipal);
+        PnlVarianteProducto pnl = new PnlVarianteProducto(seleccionada, frmPrincipal.getVarianteProductoNegocio(), frmPrincipal);
         frmPrincipal.pintarPanelPrincipal(pnl);
     }//GEN-LAST:event_btnVer1ActionPerformed
 
     private void btnVer2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVer2ActionPerformed
         VarianteProductoDTO seleccionada = listaActualDeVariantes.get(1); // o el índice correspondiente
-        PnlVarianteProducto pnl = new PnlVarianteProducto(seleccionada, varianteNegocio, frmPrincipal);
+        PnlVarianteProducto pnl = new PnlVarianteProducto(seleccionada, frmPrincipal.getVarianteProductoNegocio(), frmPrincipal);
         frmPrincipal.pintarPanelPrincipal(pnl);
     }//GEN-LAST:event_btnVer2ActionPerformed
 
     private void btnVer3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVer3ActionPerformed
         VarianteProductoDTO seleccionada = listaActualDeVariantes.get(2); // o el índice correspondiente
-        PnlVarianteProducto pnl = new PnlVarianteProducto(seleccionada, varianteNegocio, frmPrincipal);
+        PnlVarianteProducto pnl = new PnlVarianteProducto(seleccionada, frmPrincipal.getVarianteProductoNegocio(), frmPrincipal);
         frmPrincipal.pintarPanelPrincipal(pnl);
     }//GEN-LAST:event_btnVer3ActionPerformed
 
     private void btnVer4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVer4ActionPerformed
         VarianteProductoDTO seleccionada = listaActualDeVariantes.get(3); // o el índice correspondiente
-        PnlVarianteProducto pnl = new PnlVarianteProducto(seleccionada, varianteNegocio, frmPrincipal);
+        PnlVarianteProducto pnl = new PnlVarianteProducto(seleccionada, frmPrincipal.getVarianteProductoNegocio(), frmPrincipal);
         frmPrincipal.pintarPanelPrincipal(pnl);
     }//GEN-LAST:event_btnVer4ActionPerformed
 
     private void btnVer5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVer5ActionPerformed
         VarianteProductoDTO seleccionada = listaActualDeVariantes.get(4); // o el índice correspondiente
-        PnlVarianteProducto pnl = new PnlVarianteProducto(seleccionada, varianteNegocio, frmPrincipal);
+        PnlVarianteProducto pnl = new PnlVarianteProducto(seleccionada, frmPrincipal.getVarianteProductoNegocio(), frmPrincipal);
         frmPrincipal.pintarPanelPrincipal(pnl);
     }//GEN-LAST:event_btnVer5ActionPerformed
 
     private void btnVer6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVer6ActionPerformed
         VarianteProductoDTO seleccionada = listaActualDeVariantes.get(5); // o el índice correspondiente
-        PnlVarianteProducto pnl = new PnlVarianteProducto(seleccionada, varianteNegocio, frmPrincipal);
+        PnlVarianteProducto pnl = new PnlVarianteProducto(seleccionada, frmPrincipal.getVarianteProductoNegocio(), frmPrincipal);
         frmPrincipal.pintarPanelPrincipal(pnl);
     }//GEN-LAST:event_btnVer6ActionPerformed
 
     private void btnVer7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVer7ActionPerformed
         VarianteProductoDTO seleccionada = listaActualDeVariantes.get(6); // o el índice correspondiente
-        PnlVarianteProducto pnl = new PnlVarianteProducto(seleccionada, varianteNegocio, frmPrincipal);
+        PnlVarianteProducto pnl = new PnlVarianteProducto(seleccionada, frmPrincipal.getVarianteProductoNegocio(), frmPrincipal);
         frmPrincipal.pintarPanelPrincipal(pnl);
     }//GEN-LAST:event_btnVer7ActionPerformed
 
     private void btnVer8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVer8ActionPerformed
         VarianteProductoDTO seleccionada = listaActualDeVariantes.get(7); // o el índice correspondiente
-        PnlVarianteProducto pnl = new PnlVarianteProducto(seleccionada, varianteNegocio, frmPrincipal);
+        PnlVarianteProducto pnl = new PnlVarianteProducto(seleccionada, frmPrincipal.getVarianteProductoNegocio(), frmPrincipal);
         frmPrincipal.pintarPanelPrincipal(pnl);
     }//GEN-LAST:event_btnVer8ActionPerformed
 
     private void btnVer9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVer9ActionPerformed
         VarianteProductoDTO seleccionada = listaActualDeVariantes.get(8); // o el índice correspondiente
-        PnlVarianteProducto pnl = new PnlVarianteProducto(seleccionada, varianteNegocio, frmPrincipal);
+        PnlVarianteProducto pnl = new PnlVarianteProducto(seleccionada, frmPrincipal.getVarianteProductoNegocio(), frmPrincipal);
         frmPrincipal.pintarPanelPrincipal(pnl);
     }//GEN-LAST:event_btnVer9ActionPerformed
 
     private void btnVer10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVer10ActionPerformed
         VarianteProductoDTO seleccionada = listaActualDeVariantes.get(9); // o el índice correspondiente
-        PnlVarianteProducto pnl = new PnlVarianteProducto(seleccionada, varianteNegocio, frmPrincipal);
+        PnlVarianteProducto pnl = new PnlVarianteProducto(seleccionada, frmPrincipal.getVarianteProductoNegocio(), frmPrincipal);
         frmPrincipal.pintarPanelPrincipal(pnl);
     }//GEN-LAST:event_btnVer10ActionPerformed
 
     private void btnVer11ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVer11ActionPerformed
         VarianteProductoDTO seleccionada = listaActualDeVariantes.get(10); // o el índice correspondiente
-        PnlVarianteProducto pnl = new PnlVarianteProducto(seleccionada, varianteNegocio, frmPrincipal);
+        PnlVarianteProducto pnl = new PnlVarianteProducto(seleccionada, frmPrincipal.getVarianteProductoNegocio(), frmPrincipal);
         frmPrincipal.pintarPanelPrincipal(pnl);
     }//GEN-LAST:event_btnVer11ActionPerformed
 
     private void btnVer12ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVer12ActionPerformed
         VarianteProductoDTO seleccionada = listaActualDeVariantes.get(11); // o el índice correspondiente
-        PnlVarianteProducto pnl = new PnlVarianteProducto(seleccionada, varianteNegocio, frmPrincipal);
+        PnlVarianteProducto pnl = new PnlVarianteProducto(seleccionada, frmPrincipal.getVarianteProductoNegocio(), frmPrincipal);
         frmPrincipal.pintarPanelPrincipal(pnl);
     }//GEN-LAST:event_btnVer12ActionPerformed
 

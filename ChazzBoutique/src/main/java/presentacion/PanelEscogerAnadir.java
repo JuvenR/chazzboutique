@@ -33,12 +33,10 @@ public class PanelEscogerAnadir extends javax.swing.JPanel {
         jPanel17 = new javax.swing.JPanel();
         jButton14 = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
-        jButtonElegirAnadirProducto = new javax.swing.JButton();
         jPanel19 = new javax.swing.JPanel();
         jButton16 = new javax.swing.JButton();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
-        jButtonVarianteProducto = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
 
         jPanel1.setBackground(new java.awt.Color(255, 255, 255));
@@ -48,16 +46,17 @@ public class PanelEscogerAnadir extends javax.swing.JPanel {
 
         jButton14.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/AnadirProducto.png"))); // NOI18N
         jButton14.setBorderPainted(false);
+        jButton14.setContentAreaFilled(false);
+        jButton14.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        jButton14.setFocusPainted(false);
+        jButton14.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton14ActionPerformed(evt);
+            }
+        });
 
         jLabel1.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
         jLabel1.setText("Añadir Producto");
-
-        jButtonElegirAnadirProducto.setText("Elegir");
-        jButtonElegirAnadirProducto.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButtonElegirAnadirProductoActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout jPanel17Layout = new javax.swing.GroupLayout(jPanel17);
         jPanel17.setLayout(jPanel17Layout);
@@ -68,13 +67,8 @@ public class PanelEscogerAnadir extends javax.swing.JPanel {
                 .addComponent(jButton14)
                 .addGap(56, 56, 56))
             .addGroup(jPanel17Layout.createSequentialGroup()
-                .addGroup(jPanel17Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel17Layout.createSequentialGroup()
-                        .addGap(123, 123, 123)
-                        .addComponent(jLabel1))
-                    .addGroup(jPanel17Layout.createSequentialGroup()
-                        .addGap(206, 206, 206)
-                        .addComponent(jButtonElegirAnadirProducto, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(123, 123, 123)
+                .addComponent(jLabel1)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel17Layout.setVerticalGroup(
@@ -84,8 +78,6 @@ public class PanelEscogerAnadir extends javax.swing.JPanel {
                 .addComponent(jButton14)
                 .addGap(69, 69, 69)
                 .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jButtonElegirAnadirProducto, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -94,19 +86,20 @@ public class PanelEscogerAnadir extends javax.swing.JPanel {
 
         jButton16.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/EscogerCOlor.png"))); // NOI18N
         jButton16.setBorderPainted(false);
+        jButton16.setContentAreaFilled(false);
+        jButton16.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        jButton16.setFocusPainted(false);
+        jButton16.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton16ActionPerformed(evt);
+            }
+        });
 
         jLabel3.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
         jLabel3.setText("Producto Existente");
 
         jLabel4.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
         jLabel4.setText("Añadir variantes a un");
-
-        jButtonVarianteProducto.setText("Elegir");
-        jButtonVarianteProducto.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButtonVarianteProductoActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout jPanel19Layout = new javax.swing.GroupLayout(jPanel19);
         jPanel19.setLayout(jPanel19Layout);
@@ -123,10 +116,6 @@ public class PanelEscogerAnadir extends javax.swing.JPanel {
                             .addComponent(jLabel4)
                             .addComponent(jLabel3))))
                 .addContainerGap(39, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel19Layout.createSequentialGroup()
-                .addGap(0, 0, Short.MAX_VALUE)
-                .addComponent(jButtonVarianteProducto, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(174, 174, 174))
         );
         jPanel19Layout.setVerticalGroup(
             jPanel19Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -137,9 +126,7 @@ public class PanelEscogerAnadir extends javax.swing.JPanel {
                 .addComponent(jLabel4)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 8, Short.MAX_VALUE)
                 .addComponent(jLabel3)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jButtonVarianteProducto, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(23, 23, 23))
+                .addGap(53, 53, 53))
         );
 
         jLabel2.setFont(new java.awt.Font("Segoe UI", 0, 64)); // NOI18N
@@ -150,16 +137,16 @@ public class PanelEscogerAnadir extends javax.swing.JPanel {
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGap(369, 369, 369)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(444, 444, 444)
                         .addComponent(jPanel17, javax.swing.GroupLayout.PREFERRED_SIZE, 501, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(31, 31, 31)
                         .addComponent(jPanel19, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(728, 728, 728)
+                        .addGap(284, 284, 284)
                         .addComponent(jLabel2)))
-                .addContainerGap(462, Short.MAX_VALUE))
+                .addContainerGap(360, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -185,20 +172,18 @@ public class PanelEscogerAnadir extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButtonElegirAnadirProductoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonElegirAnadirProductoActionPerformed
+    private void jButton14ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton14ActionPerformed
         frmPrincipal.pintarPanelPrincipal(new PnlAnadirProducto(frmPrincipal));
-    }//GEN-LAST:event_jButtonElegirAnadirProductoActionPerformed
+    }//GEN-LAST:event_jButton14ActionPerformed
 
-    private void jButtonVarianteProductoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonVarianteProductoActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jButtonVarianteProductoActionPerformed
+    private void jButton16ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton16ActionPerformed
+        frmPrincipal.pintarPanelPrincipal(new PnlProductoParaVariante(frmPrincipal));
+    }//GEN-LAST:event_jButton16ActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton14;
     private javax.swing.JButton jButton16;
-    private javax.swing.JButton jButtonElegirAnadirProducto;
-    private javax.swing.JButton jButtonVarianteProducto;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;

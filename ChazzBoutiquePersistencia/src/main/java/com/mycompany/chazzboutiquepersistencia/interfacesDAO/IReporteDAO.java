@@ -4,10 +4,16 @@
  */
 package com.mycompany.chazzboutiquepersistencia.interfacesDAO;
 
+import com.mycompany.chazzboutiquepersistencia.dtoReportes.ReporteCategoriaDTO;
+import com.mycompany.chazzboutiquepersistencia.dtoReportes.ReporteInventarioDTO;
+import com.mycompany.chazzboutiquepersistencia.dtoReportes.ReporteProductoDTO;
+import com.mycompany.chazzboutiquepersistencia.dtoReportes.ReporteVentaDTO;
 import com.mycompany.chazzboutiquepersistencia.dtos.ReporteVentaResultadoDTO;
 import com.mycompany.chazzboutiquepersistencia.dtos.ReporteVentasDTO;
 import com.mycompany.chazzboutiquepersistencia.excepciones.PersistenciaException;
+import java.time.LocalDate;
 import java.util.List;
+import javax.persistence.PersistenceException;
 
 /**
  *
@@ -15,6 +21,11 @@ import java.util.List;
  */
 public interface IReporteDAO {
 
-    public List<ReporteVentaResultadoDTO> generarReporteVentas(ReporteVentasDTO filtro) throws PersistenciaException;
+    List<ReporteVentaDTO> obtenerDatosVentas(LocalDate fechaInicio, LocalDate fechaFin) throws PersistenceException;
 
+    List<ReporteProductoDTO> obtenerProductosMasVendidos(LocalDate fechaInicio, LocalDate fechaFin) throws PersistenceException;
+
+    List<ReporteCategoriaDTO> obtenerIngresosPorCategoria(LocalDate fechaInicio, LocalDate fechaFin) throws PersistenceException;
+
+    List<ReporteInventarioDTO> obtenerInventarioActual() throws PersistenceException;
 }

@@ -5,13 +5,17 @@ import com.mycompany.chazzboutiquenegocio.excepciones.NegocioException;
 import com.mycompany.chazzboutiquenegocio.interfacesObjetosNegocio.IVarianteProductoNegocio;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Random;
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JColorChooser;
 import javax.swing.JFileChooser;
@@ -27,6 +31,8 @@ public class PnlAnadirVarianteProducto extends javax.swing.JPanel {
     private Long productoId;
     private IVarianteProductoNegocio varianteNegocio;
     private String imagen;
+    private BufferedImage imagenSeleccionadaBuffered;
+    private String nombreImagenTemporal;
 
     /**
      * Creates new form PnlAnadirProducto
@@ -268,30 +274,98 @@ public class PnlAnadirVarianteProducto extends javax.swing.JPanel {
 
     private void btnConfirmarActionPerformed(java.awt.event.ActionEvent evt) {
         try {
+            // Validar campos obligatorios
             String codigoBarra = txtCodigoBarras1.getText().trim();
-            String talla = cbxTallas.getSelectedItem().toString();
-            BigDecimal precioCompra = new BigDecimal(txtPrecioCompra.getText().trim());
-            BigDecimal precioVenta = new BigDecimal(txtPrecioVenta.getText().trim());
+            if (codigoBarra.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Debes ingresar o generar un código de barras.", "Campo requerido", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            String talla = cbxTallas.getSelectedItem() != null ? cbxTallas.getSelectedItem().toString() : "";
+            if (talla.isBlank()) {
+                JOptionPane.showMessageDialog(this, "Debes seleccionar una talla.", "Campo requerido", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            String precioCompraStr = txtPrecioCompra.getText().trim();
+            if (precioCompraStr.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Debes ingresar el precio de compra.", "Campo requerido", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            String precioVentaStr = txtPrecioVenta.getText().trim();
+            if (precioVentaStr.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Debes ingresar el precio de venta.", "Campo requerido", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            if (btnColor.getBackground().equals(new Color(238, 238, 238))) {
+                JOptionPane.showMessageDialog(this, "Debes seleccionar un color.", "Campo requerido", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            if (imagenSeleccionadaBuffered == null || nombreImagenTemporal == null) {
+                JOptionPane.showMessageDialog(this, "Debes seleccionar una imagen para la variante.", "Campo requerido", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Conversión de precios
+            BigDecimal precioCompra = new BigDecimal(precioCompraStr);
+            BigDecimal precioVenta = new BigDecimal(precioVentaStr);
+
+            // Obtener color en formato hexadecimal
             Color color = btnColor.getBackground();
             String hexColor = String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
 
+            // Guardar imagen con marco
+            try {
+                File carpetaDestino = new File("imagenes/variantesProductos/");
+                if (!carpetaDestino.exists()) {
+                    carpetaDestino.mkdirs();
+                }
+
+                File destino = new File(carpetaDestino, nombreImagenTemporal);
+
+// Si ya existe un archivo con ese nombre, generar uno nuevo único
+                int contador = 1;
+                while (destino.exists()) {
+                    String nombreBase = nombreImagenTemporal.substring(0, nombreImagenTemporal.lastIndexOf('.'));
+                    String extension = nombreImagenTemporal.substring(nombreImagenTemporal.lastIndexOf('.') + 1);
+                    String nuevoNombre = nombreBase + "_" + contador + "." + extension;
+                    destino = new File(carpetaDestino, nuevoNombre);
+                    contador++;
+                }
+                ImageIO.write(imagenSeleccionadaBuffered, "png", destino);
+                imagen = "/variantesProductos/" + destino.getName();
+
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, "Error al guardar la imagen: " + e.getMessage());
+                return;
+            }
+
+            // Crear DTO y guardar en base de datos
             VarianteProductoDTO dto = new VarianteProductoDTO(
-                    codigoBarra,
-                    10, // stock fijo
-                    precioCompra,
-                    talla,
-                    hexColor,
-                    precioVenta,
-                    productoId
+                    codigoBarra, 0, precioCompra, talla, hexColor, precioVenta, productoId, imagen
             );
 
             varianteNegocio.crearVariante(dto);
             JOptionPane.showMessageDialog(this, "Variante creada correctamente.");
 
+            // Limpiar campos
             txtCodigoBarras1.setText("");
             txtPrecioCompra.setText("");
             txtPrecioVenta.setText("");
+            cbxTallas.setSelectedIndex(0);
+            btnColor.setBackground(new Color(238, 238, 238));
+            imagen = null;
+            lblImagen.setIcon(null);
 
+            // Limpiar imagen temporal
+            imagenSeleccionadaBuffered = null;
+            nombreImagenTemporal = null;
+
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "El precio de compra o de venta no tiene un formato válido.", "Error de formato", JOptionPane.ERROR_MESSAGE);
         } catch (NegocioException e) {
             JOptionPane.showMessageDialog(this, "Error de negocio: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         } catch (Exception ex) {
@@ -329,37 +403,7 @@ public class PnlAnadirVarianteProducto extends javax.swing.JPanel {
         cbxTallas.addItem("XXL");
     }
 
-    private void seleccionarImagen() {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Seleccionar Imagen");
-        fileChooser.setFileFilter(new FileNameExtensionFilter("Imágenes", "jpg", "jpeg", "png", "gif"));
 
-        int resultado = fileChooser.showOpenDialog(this);
-        if (resultado == JFileChooser.APPROVE_OPTION) {
-            File imagenSeleccionada = fileChooser.getSelectedFile();
-
-            try {
-                String nombreArchivo = imagenSeleccionada.getName();
-                File carpetaDestino = new File("src/main/resources/images/varianteProducto/");
-                if (!carpetaDestino.exists()) {
-                    carpetaDestino.mkdirs();
-                }
-
-                File destino = new File(carpetaDestino, nombreArchivo);
-                Files.copy(imagenSeleccionada.toPath(), destino.toPath(), StandardCopyOption.REPLACE_EXISTING);
-
-                imagen = "/images/varianteProducto/" + nombreArchivo;
-
-                ImageIcon icon = new ImageIcon(destino.getAbsolutePath());
-                Image img = icon.getImage().getScaledInstance(lblImagen.getWidth(), lblImagen.getHeight(), Image.SCALE_SMOOTH);
-                lblImagen.setIcon(new ImageIcon(img));
-                lblImagen.setText("");
-
-            } catch (IOException e) {
-                JOptionPane.showMessageDialog(this, "Error al copiar la imagen: " + e.getMessage());
-            }
-        }
-    }
     private void cbxTallasActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxTallasActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_cbxTallasActionPerformed
@@ -376,40 +420,55 @@ public class PnlAnadirVarianteProducto extends javax.swing.JPanel {
         txtCodigoBarras1ActionPerformed(null);
     }//GEN-LAST:event_btnGenerarCodigoBarrasActionPerformed
 
-    private void btnAgregarImagenActionPerformed(java.awt.event.ActionEvent evt) {JFileChooser fileChooser = new JFileChooser();
-    fileChooser.setDialogTitle("Seleccionar Imagen");
-    fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Imágenes", "jpg", "jpeg", "png", "gif"));
+    private void btnAgregarImagenActionPerformed(java.awt.event.ActionEvent evt) {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Seleccionar Imagen");
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Imágenes", "jpg", "jpeg", "png", "gif"));
 
-    int resultado = fileChooser.showOpenDialog(this);
-    if (resultado == JFileChooser.APPROVE_OPTION) {
-        File imagenSeleccionada = fileChooser.getSelectedFile();
+        int resultado = fileChooser.showOpenDialog(this);
+        if (resultado == JFileChooser.APPROVE_OPTION) {
+            File imagenSeleccionada = fileChooser.getSelectedFile();
 
-        try {
-            String nombreArchivo = imagenSeleccionada.getName();
-            File carpetaDestino = new File("src/main/resources/images/");
-            if (!carpetaDestino.exists()) {
-                carpetaDestino.mkdirs();
+            try {
+                BufferedImage ropa = ImageIO.read(imagenSeleccionada);
+                nombreImagenTemporal = imagenSeleccionada.getName();
+
+                URL marcoURL = getClass().getResource("/images/marco_chazz.png");
+                if (marcoURL == null) {
+                    JOptionPane.showMessageDialog(this, "No se encontró el marco.");
+                    return;
+                }
+                BufferedImage marco = ImageIO.read(marcoURL);
+
+                Image ropaEscalada = ropa.getScaledInstance(marco.getWidth(), marco.getHeight(), Image.SCALE_SMOOTH);
+                BufferedImage ropaFinal = new BufferedImage(marco.getWidth(), marco.getHeight(), BufferedImage.TYPE_INT_RGB);
+                Graphics2D g2 = ropaFinal.createGraphics();
+                g2.drawImage(ropaEscalada, 0, 0, null);
+                g2.dispose();
+
+                imagenSeleccionadaBuffered = aplicarMarco(ropaFinal, marco); // Imagen con marco en memoria
+
+                Image img = imagenSeleccionadaBuffered.getScaledInstance(400, 600, Image.SCALE_SMOOTH);
+                lblImagen.setIcon(new ImageIcon(img));
+                lblImagen.setText("");
+
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, "Error al procesar la imagen: " + e.getMessage());
             }
-
-            File destino = new File(carpetaDestino, nombreArchivo);
-            java.nio.file.Files.copy(
-                imagenSeleccionada.toPath(),
-                destino.toPath(),
-                java.nio.file.StandardCopyOption.REPLACE_EXISTING
-            );
-
-            imagen = "/images/" + nombreArchivo;
-
-            ImageIcon icon = new ImageIcon(destino.getAbsolutePath());
-            Image img = icon.getImage().getScaledInstance(lblImagen.getWidth(), lblImagen.getHeight(), Image.SCALE_SMOOTH);
-            lblImagen.setIcon(new ImageIcon(img));
-            lblImagen.setText("");
-
-        } catch (IOException e) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Error al copiar la imagen: " + e.getMessage());
         }
     }
-    }                                                
+
+    private BufferedImage aplicarMarco(BufferedImage base, BufferedImage marco) {
+        BufferedImage combinado = new BufferedImage(
+                base.getWidth(), base.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = combinado.createGraphics();
+
+        g.drawImage(base, 0, 0, null);
+        g.drawImage(marco, 0, 0, base.getWidth(), base.getHeight(), null); // Ajustamos tamaño
+        g.dispose();
+
+        return combinado;
+    }
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

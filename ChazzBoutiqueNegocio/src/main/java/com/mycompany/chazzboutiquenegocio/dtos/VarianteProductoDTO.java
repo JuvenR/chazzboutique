@@ -36,6 +36,30 @@ public class VarianteProductoDTO {
         this.productoId = productoId;
     }
 
+    public VarianteProductoDTO(Long id, String codigoBarra, int stock, BigDecimal precioCompra, String talla, String color, BigDecimal precioVenta, Long productoId, String nombreProducto, String urlImagen) {
+        this.id = id;
+        this.codigoBarra = codigoBarra;
+        this.stock = stock;
+        this.precioCompra = precioCompra;
+        this.talla = talla;
+        this.color = color;
+        this.precioVenta = precioVenta;
+        this.productoId = productoId;
+        this.nombreProducto = nombreProducto;
+        this.urlImagen = urlImagen;
+    }
+
+    public VarianteProductoDTO(String codigoBarra, int stock, BigDecimal precioCompra, String talla, String color, BigDecimal precioVenta, Long productoId, String urlImagen) {
+        this.codigoBarra = codigoBarra;
+        this.stock = stock;
+        this.precioCompra = precioCompra;
+        this.talla = talla;
+        this.color = color;
+        this.precioVenta = precioVenta;
+        this.productoId = productoId;
+        this.urlImagen = urlImagen;
+    }
+
     
 
     public VarianteProductoDTO(String codigoBarra, int stock, BigDecimal precioCompra, String talla, String color, BigDecimal precioVenta, Long productoId) {
@@ -127,6 +151,11 @@ public class VarianteProductoDTO {
 
     public void setProductoId(Long productoId) {
         this.productoId = productoId;
+    }
+
+    @Override
+    public String toString() {
+        return "VarianteProductoDTO{" + "id=" + id + ", codigoBarra=" + codigoBarra + ", stock=" + stock + ", precioCompra=" + precioCompra + ", talla=" + talla + ", color=" + color + ", precioVenta=" + precioVenta + ", productoId=" + productoId + ", nombreProducto=" + nombreProducto + ", urlImagen=" + urlImagen + '}';
     }
 
 }

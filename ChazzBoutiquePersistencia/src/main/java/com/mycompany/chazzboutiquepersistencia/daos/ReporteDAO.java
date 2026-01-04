@@ -5,12 +5,21 @@
 package com.mycompany.chazzboutiquepersistencia.daos;
 
 import com.mycompany.chazzboutiquepersistencia.conexion.IConexionBD;
+import com.mycompany.chazzboutiquepersistencia.dtoReportes.ReporteCategoriaDTO;
+import com.mycompany.chazzboutiquepersistencia.dtoReportes.ReporteInventarioDTO;
+import com.mycompany.chazzboutiquepersistencia.dtoReportes.ReporteProductoDTO;
+import com.mycompany.chazzboutiquepersistencia.dtoReportes.ReporteVentaDTO;
 import com.mycompany.chazzboutiquepersistencia.dtos.ReporteVentaResultadoDTO;
 import com.mycompany.chazzboutiquepersistencia.dtos.ReporteVentasDTO;
 import com.mycompany.chazzboutiquepersistencia.excepciones.PersistenciaException;
 import com.mycompany.chazzboutiquepersistencia.interfacesDAO.IReporteDAO;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.NonUniqueResultException;
+import javax.persistence.PersistenceException;
 import javax.persistence.TypedQuery;
 
 /**
@@ -26,62 +35,112 @@ public class ReporteDAO implements IReporteDAO {
     }
 
     @Override
-    public List<ReporteVentaResultadoDTO> generarReporteVentas(ReporteVentasDTO filtro) throws PersistenciaException {
+    public List<ReporteVentaDTO> obtenerDatosVentas(LocalDate fechaInicio, LocalDate fechaFin) throws PersistenceException {
         EntityManager em = conexionBD.getEntityManager();
         try {
-            // Construcción dinámica de JPQL
-            StringBuilder jpql = new StringBuilder();
-            // Selección según agrupamiento
-            String groupBy = "";
-            switch (filtro.getAgruparPor() != null ? filtro.getAgruparPor().toUpperCase() : "") {
-                case "MES":
-                    jpql.append("SELECT NEW com.mycompany.chazzboutiquepersistencia.daos.ReporteVentaResultadoDTO("
-                            + "FUNCTION('YEAR', v.fecha), FUNCTION('MONTH', v.fecha), SUM(d.cantidad), SUM(d.precioUnitario * d.cantidad)) ");
-                    groupBy = "GROUP BY FUNCTION('YEAR', v.fecha), FUNCTION('MONTH', v.fecha) ORDER BY FUNCTION('YEAR', v.fecha), FUNCTION('MONTH', v.fecha)";
-                    break;
-                case "AÑO":
-                    jpql.append("SELECT NEW com.mycompany.chazzboutiquepersistencia.daos.ReporteVentaResultadoDTO("
-                            + "FUNCTION('YEAR', v.fecha), null, SUM(d.cantidad), SUM(d.precioUnitario * d.cantidad)) ");
-                    groupBy = "GROUP BY FUNCTION('YEAR', v.fecha) ORDER BY FUNCTION('YEAR', v.fecha)";
-                    break;
-                default: // DIA
-                    jpql.append("SELECT NEW com.mycompany.chazzboutiquepersistencia.daos.ReporteVentaResultadoDTO("
-                            + "v.fecha, null, SUM(d.cantidad), SUM(d.precioUnitario * d.cantidad)) ");
-                    groupBy = "GROUP BY v.fecha ORDER BY v.fecha";
-            }
-            jpql.append("FROM VentaDetalle d JOIN d.venta v WHERE v.fecha BETWEEN :fi AND :ff ");
-            if (filtro.getProductoId() != null) {
-                jpql.append("AND d.producto.id = :pid ");
-            }
-            if (filtro.getCategoriaId() != null) {
-                jpql.append("AND d.producto.categoria.id = :cid ");
-            }
-            if (filtro.getVarianteId() != null) {
-                jpql.append("AND d.variante.id = :vid ");
-            }
-            jpql.append(groupBy);
+            String jpql = "SELECT new com.mycompany.chazzboutiquepersistencia.dtoReportes.ReporteVentaDTO(v.id, v.fechaVenta, v.ventaTotal, u.nombreUsuario) "
+                    + "FROM Venta v JOIN v.usuario u "
+                    + "WHERE v.fechaVenta BETWEEN :fechaInicio AND :fechaFin "
+                    + "ORDER BY v.fechaVenta DESC";
 
-            TypedQuery<ReporteVentaResultadoDTO> query = em.createQuery(jpql.toString(), ReporteVentaResultadoDTO.class);
-            query.setParameter("fi", filtro.getFechaInicio());
-            query.setParameter("ff", filtro.getFechaFin());
-            if (filtro.getProductoId() != null) {
-                query.setParameter("pid", filtro.getProductoId());
-            }
-            if (filtro.getCategoriaId() != null) {
-                query.setParameter("cid", filtro.getCategoriaId());
-            }
-            if (filtro.getVarianteId() != null) {
-                query.setParameter("vid", filtro.getVarianteId());
+            TypedQuery<ReporteVentaDTO> query = em.createQuery(jpql, ReporteVentaDTO.class);
+            query.setParameter("fechaInicio", fechaInicio);
+            query.setParameter("fechaFin", fechaFin);
+            return query.getResultList();
+
+        } catch (NoResultException | NonUniqueResultException | IllegalArgumentException e) {
+            throw new PersistenceException("Error en la consulta de ventas", e);
+        } finally {
+            em.close();
+        }
+    }
+
+    @Override
+    public List<ReporteProductoDTO> obtenerProductosMasVendidos(LocalDate fechaInicio, LocalDate fechaFin) throws PersistenceException {
+        EntityManager em = conexionBD.getEntityManager();
+        try {
+            String jpql = "SELECT new com.mycompany.chazzboutiquepersistencia.dtoReportes.ReporteProductoDTO(p.nombreProducto, SUM(dv.cantidad), "
+                    + "CAST(SUM(dv.precioUnitario * dv.cantidad) AS DECIMAL(10,2)), c.nombreCategoria) "
+                    + "FROM DetalleVenta dv "
+                    + "JOIN dv.varianteProducto vp "
+                    + "JOIN vp.producto p "
+                    + "JOIN p.categoria c "
+                    + "JOIN dv.venta v "
+                    + "WHERE v.fechaVenta BETWEEN :fechaInicio AND :fechaFin "
+                    + "GROUP BY p.nombreProducto, c.nombreCategoria "
+                    + "ORDER BY SUM(dv.cantidad) DESC";
+
+            TypedQuery<ReporteProductoDTO> query = em.createQuery(jpql, ReporteProductoDTO.class);
+            query.setParameter("fechaInicio", fechaInicio);
+            query.setParameter("fechaFin", fechaFin);
+            return query.getResultList();
+        } catch (Exception e) {
+            throw new PersistenceException("Error al obtener productos más vendidos", e);
+        } finally {
+            em.close();
+        }
+    }
+
+    @Override
+    public List<ReporteCategoriaDTO> obtenerIngresosPorCategoria(LocalDate fechaInicio, LocalDate fechaFin) throws PersistenceException {
+        EntityManager em = conexionBD.getEntityManager();
+        try {
+            // Calcular el total de ventas en el periodo
+            BigDecimal totalVentas = em.createQuery(
+                    "SELECT SUM(v.ventaTotal) FROM Venta v WHERE v.fechaVenta BETWEEN :fechaInicio AND :fechaFin",
+                    BigDecimal.class)
+                    .setParameter("fechaInicio", fechaInicio)
+                    .setParameter("fechaFin", fechaFin)
+                    .getSingleResult();
+
+            // Si no hay ventas, establecer totalVentas como 1 para evitar división por cero
+            if (totalVentas == null || totalVentas.compareTo(BigDecimal.ZERO) == 0) {
+                totalVentas = BigDecimal.ONE;
             }
 
-            int pagina = Math.max(filtro.getPagina(), 1);
-            int tamanio = Math.max(filtro.getTamanio(), 1);
-            query.setFirstResult((pagina - 1) * tamanio);
-            query.setMaxResults(tamanio);
+            // Consulta JPQL corregida
+            String jpql = "SELECT new com.mycompany.chazzboutiquepersistencia.dtoReportes.ReporteCategoriaDTO("
+                    + "c.nombreCategoria, "
+                    + "COUNT(DISTINCT v.id), "
+                    + "SUM(d.precioUnitario * d.cantidad), "
+                    + "(SUM(d.precioUnitario * d.cantidad) / :totalVentas) * 100) "
+                    + "FROM Venta v "
+                    + "JOIN v.detallesVentas d "
+                    + "JOIN d.varianteProducto vp "
+                    + "JOIN vp.producto p "
+                    + "JOIN p.categoria c "
+                    + "WHERE v.fechaVenta BETWEEN :fechaInicio AND :fechaFin "
+                    + "GROUP BY c.nombreCategoria "
+                    + "ORDER BY SUM(d.precioUnitario * d.cantidad) DESC";
+
+            TypedQuery<ReporteCategoriaDTO> query = em.createQuery(jpql, ReporteCategoriaDTO.class);
+            query.setParameter("fechaInicio", fechaInicio);
+            query.setParameter("fechaFin", fechaFin);
+            query.setParameter("totalVentas", totalVentas);
 
             return query.getResultList();
         } catch (Exception e) {
-            throw new PersistenciaException("Error al generar reporte de ventas", e);
+            throw new PersistenceException("Error al obtener ingresos por categoría", e);
+        } finally {
+            em.close();
+        }
+    }
+
+    @Override
+    public List<ReporteInventarioDTO> obtenerInventarioActual() throws PersistenceException {
+        EntityManager em = conexionBD.getEntityManager();
+        try {
+            String jpql = "SELECT new com.mycompany.chazzboutiquepersistencia.dtoReportes.ReporteInventarioDTO(p.nombreProducto, vp.talla, vp.color, "
+                    + "vp.stock, vp.precioVenta, vp.precioVenta * vp.stock) "
+                    + "FROM VarianteProducto vp "
+                    + "JOIN vp.producto p "
+                    + "WHERE vp.stock > 0 "
+                    + "ORDER BY p.nombreProducto, p.descripcionProducto";
+
+            TypedQuery<ReporteInventarioDTO> query = em.createQuery(jpql, ReporteInventarioDTO.class);
+            return query.getResultList();
+        } catch (Exception e) {
+            throw new PersistenceException("Error al obtener el inventario actual", e);
         } finally {
             em.close();
         }

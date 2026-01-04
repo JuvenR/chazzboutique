@@ -8,12 +8,14 @@ import com.mycompany.chazzboutiquenegocio.dtos.UsuarioDTO;
 import com.mycompany.chazzboutiquenegocio.interfacesObjetosNegocio.ICategoriaNegocio;
 import com.mycompany.chazzboutiquenegocio.interfacesObjetosNegocio.IProductoNegocio;
 import com.mycompany.chazzboutiquenegocio.interfacesObjetosNegocio.IProveedorNegocio;
+import com.mycompany.chazzboutiquenegocio.interfacesObjetosNegocio.IReporteNegocio;
 import com.mycompany.chazzboutiquenegocio.interfacesObjetosNegocio.IUsuarioNegocio;
 import com.mycompany.chazzboutiquenegocio.interfacesObjetosNegocio.IVarianteProductoNegocio;
 import com.mycompany.chazzboutiquenegocio.interfacesObjetosNegocio.IVentaNegocio;
 import java.awt.Dimension;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import utils.ScrollBar;
 
 /**
  *
@@ -22,17 +24,19 @@ import javax.swing.JScrollPane;
 public class FrmPrincipal extends javax.swing.JFrame {
 
     public IUsuarioNegocio usuarioNegocio;
-    public IVentaNegocio ventaNegocio;
-    public IVarianteProductoNegocio varianteProductoNegocio;
-    public IProductoNegocio productoNegocio;
-    public ICategoriaNegocio categoriaNegocio;
-    public IProveedorNegocio proveedorNegocio;
+    private IVentaNegocio ventaNegocio;
+    private IVarianteProductoNegocio varianteProductoNegocio;
+    private IProductoNegocio productoNegocio;
+    private ICategoriaNegocio categoriaNegocio;
+    private IProveedorNegocio proveedorNegocio;
+    private IReporteNegocio reporteNegocio;
+
     private UsuarioDTO usuarioRegistrado;
 
     public FrmPrincipal(IUsuarioNegocio usuarioNegocio, IVentaNegocio ventaNegocio,
             IVarianteProductoNegocio varianteProductoNegocio,
             IProductoNegocio productoNegocio, ICategoriaNegocio categoriaNegocio,
-            IProveedorNegocio proveedorNegocio, UsuarioDTO usuarioRegistrado) {
+            IProveedorNegocio proveedorNegocio, IReporteNegocio reporteNegocio, UsuarioDTO usuarioRegistrado) {
         initComponents();
         this.setTitle("ChazzBoutique");
         this.setLocationRelativeTo(null);
@@ -43,7 +47,9 @@ public class FrmPrincipal extends javax.swing.JFrame {
         this.productoNegocio = productoNegocio;
         this.categoriaNegocio = categoriaNegocio;
         this.proveedorNegocio = proveedorNegocio;
+        this.reporteNegocio = reporteNegocio;
         this.usuarioRegistrado = usuarioRegistrado;
+        this.jScrollPane1.setVerticalScrollBar(new ScrollBar());
 
         this.pintarPanelPrincipal(new PanelHome(this));
     }
@@ -83,6 +89,14 @@ public class FrmPrincipal extends javax.swing.JFrame {
         return proveedorNegocio;
     }
 
+    public ICategoriaNegocio getCategoriaNegocio() {
+        return categoriaNegocio;
+    }
+
+    public IReporteNegocio getReporteNegocio() {
+        return reporteNegocio;
+    }
+
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -91,15 +105,15 @@ public class FrmPrincipal extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
         jPanel4 = new javax.swing.JPanel();
-        botonMenuHome = new utils.BotonMenu();
+        botonMenu1 = new utils.BotonMenu();
         jPanel5 = new javax.swing.JPanel();
-        botonVenta = new utils.BotonMenu();
+        botonMenu2 = new utils.BotonMenu();
         jPanel6 = new javax.swing.JPanel();
         btnCategorias = new utils.BotonMenu();
         jPanel7 = new javax.swing.JPanel();
-        botonMenuProducto = new utils.BotonMenu();
+        botonMenu4 = new utils.BotonMenu();
         jPanel8 = new javax.swing.JPanel();
-        botonReportes = new utils.BotonMenu();
+        botonMenu5 = new utils.BotonMenu();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
 
@@ -116,12 +130,12 @@ public class FrmPrincipal extends javax.swing.JFrame {
         jPanel4.setBackground(new java.awt.Color(0, 0, 0));
         jPanel4.setPreferredSize(new java.awt.Dimension(300, 84));
 
-        botonMenuHome.setForeground(new java.awt.Color(255, 255, 255));
-        botonMenuHome.setText("Home");
-        botonMenuHome.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
-        botonMenuHome.addActionListener(new java.awt.event.ActionListener() {
+        botonMenu1.setForeground(new java.awt.Color(255, 255, 255));
+        botonMenu1.setText("Home");
+        botonMenu1.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
+        botonMenu1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                botonMenuHomeActionPerformed(evt);
+                botonMenu1ActionPerformed(evt);
             }
         });
 
@@ -131,14 +145,14 @@ public class FrmPrincipal extends javax.swing.JFrame {
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
                 .addContainerGap(14, Short.MAX_VALUE)
-                .addComponent(botonMenuHome, javax.swing.GroupLayout.PREFERRED_SIZE, 267, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(botonMenu1, javax.swing.GroupLayout.PREFERRED_SIZE, 267, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(19, 19, 19))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(botonMenuHome, javax.swing.GroupLayout.DEFAULT_SIZE, 72, Short.MAX_VALUE)
+                .addComponent(botonMenu1, javax.swing.GroupLayout.DEFAULT_SIZE, 72, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -147,12 +161,12 @@ public class FrmPrincipal extends javax.swing.JFrame {
         jPanel5.setBackground(new java.awt.Color(0, 0, 0));
         jPanel5.setPreferredSize(new java.awt.Dimension(300, 84));
 
-        botonVenta.setForeground(new java.awt.Color(255, 255, 255));
-        botonVenta.setText("Venta");
-        botonVenta.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
-        botonVenta.addActionListener(new java.awt.event.ActionListener() {
+        botonMenu2.setForeground(new java.awt.Color(255, 255, 255));
+        botonMenu2.setText("Venta");
+        botonMenu2.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
+        botonMenu2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                botonVentaActionPerformed(evt);
+                botonMenu2ActionPerformed(evt);
             }
         });
 
@@ -162,14 +176,14 @@ public class FrmPrincipal extends javax.swing.JFrame {
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
                 .addContainerGap(14, Short.MAX_VALUE)
-                .addComponent(botonVenta, javax.swing.GroupLayout.PREFERRED_SIZE, 267, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(botonMenu2, javax.swing.GroupLayout.PREFERRED_SIZE, 267, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(19, 19, 19))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(botonVenta, javax.swing.GroupLayout.DEFAULT_SIZE, 72, Short.MAX_VALUE)
+                .addComponent(botonMenu2, javax.swing.GroupLayout.DEFAULT_SIZE, 72, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -209,12 +223,12 @@ public class FrmPrincipal extends javax.swing.JFrame {
         jPanel7.setBackground(new java.awt.Color(0, 0, 0));
         jPanel7.setPreferredSize(new java.awt.Dimension(300, 84));
 
-        botonMenuProducto.setForeground(new java.awt.Color(255, 255, 255));
-        botonMenuProducto.setText("Productos");
-        botonMenuProducto.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
-        botonMenuProducto.addActionListener(new java.awt.event.ActionListener() {
+        botonMenu4.setForeground(new java.awt.Color(255, 255, 255));
+        botonMenu4.setText("Productos");
+        botonMenu4.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
+        botonMenu4.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                botonMenuProductoActionPerformed(evt);
+                botonMenu4ActionPerformed(evt);
             }
         });
 
@@ -224,14 +238,14 @@ public class FrmPrincipal extends javax.swing.JFrame {
             jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel7Layout.createSequentialGroup()
                 .addContainerGap(14, Short.MAX_VALUE)
-                .addComponent(botonMenuProducto, javax.swing.GroupLayout.PREFERRED_SIZE, 267, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(botonMenu4, javax.swing.GroupLayout.PREFERRED_SIZE, 267, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(19, 19, 19))
         );
         jPanel7Layout.setVerticalGroup(
             jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel7Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(botonMenuProducto, javax.swing.GroupLayout.DEFAULT_SIZE, 72, Short.MAX_VALUE)
+                .addComponent(botonMenu4, javax.swing.GroupLayout.DEFAULT_SIZE, 72, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -240,12 +254,12 @@ public class FrmPrincipal extends javax.swing.JFrame {
         jPanel8.setBackground(new java.awt.Color(0, 0, 0));
         jPanel8.setPreferredSize(new java.awt.Dimension(300, 84));
 
-        botonReportes.setForeground(new java.awt.Color(255, 255, 255));
-        botonReportes.setText("Reportes");
-        botonReportes.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
-        botonReportes.addActionListener(new java.awt.event.ActionListener() {
+        botonMenu5.setForeground(new java.awt.Color(255, 255, 255));
+        botonMenu5.setText("Reportes");
+        botonMenu5.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
+        botonMenu5.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                botonReportesActionPerformed(evt);
+                botonMenu5ActionPerformed(evt);
             }
         });
 
@@ -255,14 +269,14 @@ public class FrmPrincipal extends javax.swing.JFrame {
             jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel8Layout.createSequentialGroup()
                 .addContainerGap(14, Short.MAX_VALUE)
-                .addComponent(botonReportes, javax.swing.GroupLayout.PREFERRED_SIZE, 267, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(botonMenu5, javax.swing.GroupLayout.PREFERRED_SIZE, 267, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(19, 19, 19))
         );
         jPanel8Layout.setVerticalGroup(
             jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel8Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(botonReportes, javax.swing.GroupLayout.DEFAULT_SIZE, 72, Short.MAX_VALUE)
+                .addComponent(botonMenu5, javax.swing.GroupLayout.DEFAULT_SIZE, 72, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -301,37 +315,34 @@ public class FrmPrincipal extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void botonVentaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonVentaActionPerformed
+    private void botonMenu2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonMenu2ActionPerformed
         this.pintarPanelPrincipal(new PanelVenta(this));
-    }//GEN-LAST:event_botonVentaActionPerformed
+    }//GEN-LAST:event_botonMenu2ActionPerformed
 
-    private void botonMenuProductoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonMenuProductoActionPerformed
-        PanelEscogerAnadir panel = new PanelEscogerAnadir(this);
-        this.pintarPanelPrincipal(panel);
-    }//GEN-LAST:event_botonMenuProductoActionPerformed
+    private void botonMenu1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonMenu1ActionPerformed
+        this.pintarPanelPrincipal(new PanelHome(this));
+    }//GEN-LAST:event_botonMenu1ActionPerformed
 
     private void btnCategoriasActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCategoriasActionPerformed
-        PnlAnadirCategoria panel = new PnlAnadirCategoria(this);
-        this.pintarPanelPrincipal(panel);
-       
+        this.pintarPanelPrincipal(new PnlAnadirCategoria(this));
     }//GEN-LAST:event_btnCategoriasActionPerformed
 
-    private void botonMenuHomeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonMenuHomeActionPerformed
-        this.pintarPanelPrincipal(new PanelHome(this));
-        
-        
-    }//GEN-LAST:event_botonMenuHomeActionPerformed
+    private void botonMenu5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonMenu5ActionPerformed
+        this.pintarPanelPrincipal(new PnlReporte(this));
+    }//GEN-LAST:event_botonMenu5ActionPerformed
 
-    private void botonReportesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonReportesActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_botonReportesActionPerformed
+
+    private void botonMenu4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonMenu4ActionPerformed
+        this.pintarPanelPrincipal(new PanelEscogerAnadir(this));
+
+    }//GEN-LAST:event_botonMenu4ActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private utils.BotonMenu botonMenuHome;
-    private utils.BotonMenu botonMenuProducto;
-    private utils.BotonMenu botonReportes;
-    private utils.BotonMenu botonVenta;
+    private utils.BotonMenu botonMenu1;
+    private utils.BotonMenu botonMenu2;
+    private utils.BotonMenu botonMenu4;
+    private utils.BotonMenu botonMenu5;
     private utils.BotonMenu btnCategorias;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;

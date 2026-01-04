@@ -1,17 +1,23 @@
 package presentacion;
 
+import com.itextpdf.text.Font;
 import com.mycompany.chazzboutiquenegocio.dtos.CategoriaDTO;
 import com.mycompany.chazzboutiquenegocio.excepciones.NegocioException;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.RenderingHints;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
@@ -19,6 +25,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import utils.ButtonEditor;
 import utils.ButtonRenderer;
 
@@ -31,7 +38,8 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
     private FrmPrincipal frmPrincipal;
     private DefaultTableModel tableModel;
     private CategoriaDTO categoriaSeleccionada;
-    private String imagen;
+    private BufferedImage imagenSeleccionadaBuffered;
+    private String rutaImagenSeleccionada; // ruta final de la imagen
 
     public PnlAnadirCategoria(FrmPrincipal frmPrincipal) {
         initComponents();
@@ -39,7 +47,11 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
         this.setSize(new Dimension(1701, 1080));
 
         lblImagen.setPreferredSize(new Dimension(480, 600));
+        configurarTabla();
+        cargarCategorias();
+    }
 
+    private void configurarTabla() {
         tableModel = new DefaultTableModel(new Object[]{"ID", "Nombre", "Descripción", "Imagen", "Editar", "Eliminar"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -48,33 +60,93 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
         };
         tblCategorias.setModel(tableModel);
 
+        tblCategorias.setDefaultRenderer(Object.class, (table, value, isSelected, hasFocus, row, column) -> {
+            java.awt.Component c = new javax.swing.table.DefaultTableCellRenderer()
+                    .getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if (value instanceof String && column != 4 && column != 5) {
+                String textoOriginal = (String) value;
+                ((javax.swing.JLabel) c).setText(formatearTitulo(textoOriginal));
+            }
+            return c;
+        });
+
+        tblCategorias.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                int row = tblCategorias.getSelectedRow();
+                if (row >= 0) {
+                    editarCategoria(row);
+                }
+            }
+        });
+
+        tblCategorias.setRowHeight(40);
+        JTableHeader header = tblCategorias.getTableHeader();
+        header.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 20));
+        header.setForeground(Color.WHITE);
+        header.setBackground(Color.BLACK);
+        header.setPreferredSize(new Dimension(header.getWidth(), 35));
+
         tblCategorias.getColumn("Editar").setCellRenderer(new ButtonRenderer("Editar"));
         tblCategorias.getColumn("Eliminar").setCellRenderer(new ButtonRenderer("Eliminar"));
         tblCategorias.getColumn("Editar").setCellEditor(new ButtonEditor(new JCheckBox(), "Editar", this::editarCategoria));
         tblCategorias.getColumn("Eliminar").setCellEditor(new ButtonEditor(new JCheckBox(), "Eliminar", this::eliminarCategoria));
-        cargarCategorias();
     }
 
     private void guardarCategoria() {
         String nombre = txtNombreCategoria.getText().trim();
         String descripcion = txtDescripcion.getText().trim();
-        String imagen = this.imagen != null ? this.imagen : " ";
+
+        if ((imagenSeleccionadaBuffered == null && categoriaSeleccionada == null)
+                || (imagenSeleccionadaBuffered == null && categoriaSeleccionada != null && rutaImagenSeleccionada == null)) {
+            JOptionPane.showMessageDialog(this, "Debes seleccionar una imagen.");
+            return;
+        }
 
         if (nombre.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Nombre es obligatorio.");
             return;
         }
 
+        // Procesar imagen seleccionada si existe
+        if (imagenSeleccionadaBuffered != null) {
+            try {
+                File carpetaDestino = new File("imagenes/categorias/");
+                if (!carpetaDestino.exists()) {
+                    carpetaDestino.mkdirs();
+                }
+
+                // Generar nombre seguro para archivo basado en el nombre de la categoría
+                String nombreBase = nombre.toLowerCase().replaceAll("[^a-z0-9]", "_");
+                File destino = new File(carpetaDestino, "categoria_" + nombreBase + ".png");
+
+                // Si ya existe un archivo con ese nombre, agregar sufijo numérico
+                int contador = 1;
+                while (destino.exists()) {
+                    destino = new File(carpetaDestino, "categoria_" + nombreBase + "_" + contador + ".png");
+                    contador++;
+                }
+
+                // Guardar imagen
+                ImageIO.write(imagenSeleccionadaBuffered, "png", destino);
+                rutaImagenSeleccionada = "/categorias/" + destino.getName(); // ruta final
+
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this, "Error al guardar la imagen: " + ex.getMessage());
+                return;
+            }
+        }
+
         try {
             if (categoriaSeleccionada == null) {
-                CategoriaDTO dto = new CategoriaDTO(null, nombre, descripcion, imagen);
-                frmPrincipal.categoriaNegocio.crearCategoria(dto);
+                CategoriaDTO dto = new CategoriaDTO(null, nombre, descripcion, rutaImagenSeleccionada);
+                frmPrincipal.getCategoriaNegocio().crearCategoria(dto);
                 JOptionPane.showMessageDialog(this, "Categoría registrada.");
             } else {
                 categoriaSeleccionada.setNombreCategoria(nombre);
                 categoriaSeleccionada.setDescripcionCategoria(descripcion);
-                categoriaSeleccionada.setImagenCategoria(imagen);
-                frmPrincipal.categoriaNegocio.actualizarCategoria(categoriaSeleccionada);
+                categoriaSeleccionada.setImagenCategoria(rutaImagenSeleccionada);
+                frmPrincipal.getCategoriaNegocio().actualizarCategoria(categoriaSeleccionada);
                 JOptionPane.showMessageDialog(this, "Categoría actualizada.");
                 categoriaSeleccionada = null;
             }
@@ -87,48 +159,59 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
         }
     }
 
-  private void seleccionarImagen() {
-    JFileChooser fileChooser = new JFileChooser();
-    fileChooser.setDialogTitle("Seleccionar Imagen");
-    fileChooser.setFileFilter(new FileNameExtensionFilter("Imágenes", "jpg", "jpeg", "png", "gif"));
-
-    int resultado = fileChooser.showOpenDialog(this);
-    if (resultado == JFileChooser.APPROVE_OPTION) {
-        File imagenSeleccionada = fileChooser.getSelectedFile();
-
-        try {
-            String nombreArchivo = imagenSeleccionada.getName();
-            File carpetaDestino = new File("src/main/resources/images/");
-            if (!carpetaDestino.exists()) {
-                carpetaDestino.mkdirs();
+    private String formatearTitulo(String texto) {
+        String[] palabras = texto.trim().toLowerCase().split("\\s+");
+        StringBuilder sb = new StringBuilder();
+        for (String palabra : palabras) {
+            if (!palabra.isEmpty()) {
+                sb.append(Character.toUpperCase(palabra.charAt(0))).append(palabra.substring(1)).append(" ");
             }
+        }
+        return sb.toString().trim();
+    }
 
-            File destino = new File(carpetaDestino, nombreArchivo);
-            Files.copy(imagenSeleccionada.toPath(), destino.toPath(), StandardCopyOption.REPLACE_EXISTING);
+    private void seleccionarImagen() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Seleccionar Imagen");
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Imágenes", "jpg", "jpeg", "png", "gif"));
 
-            imagen = "/images/" + nombreArchivo; // Ruta relativa para guardar en el DTO
-            ImageIcon icon = new ImageIcon(destino.getAbsolutePath());
-            Image img = icon.getImage().getScaledInstance(lblImagen.getWidth(), lblImagen.getHeight(), Image.SCALE_SMOOTH);
-            lblImagen.setIcon(new ImageIcon(img));
-            lblImagen.setText("");
+        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File archivo = fileChooser.getSelectedFile();
+            try {
+                BufferedImage ropa = ImageIO.read(archivo);
+                URL marcoURL = getClass().getResource("/images/marco_chazz.png");
+                if (marcoURL == null) {
+                    JOptionPane.showMessageDialog(this, "No se encontró el marco.");
+                    return;
+                }
+                BufferedImage marco = ImageIO.read(marcoURL);
 
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Error al copiar la imagen: " + e.getMessage());
+                Image ropaEscalada = ropa.getScaledInstance(marco.getWidth(), marco.getHeight(), Image.SCALE_SMOOTH);
+                BufferedImage ropaFinal = new BufferedImage(marco.getWidth(), marco.getHeight(), BufferedImage.TYPE_INT_RGB);
+                Graphics2D g2 = ropaFinal.createGraphics();
+                g2.drawImage(ropaEscalada, 0, 0, null);
+                g2.dispose();
+
+                imagenSeleccionadaBuffered = aplicarMarco(ropaFinal, marco);
+                Image img = imagenSeleccionadaBuffered.getScaledInstance(lblImagen.getWidth(), lblImagen.getHeight(), Image.SCALE_SMOOTH);
+                lblImagen.setIcon(new ImageIcon(img));
+                lblImagen.setText("");
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, "Error al procesar la imagen: " + e.getMessage());
+            }
         }
     }
-}
-
 
     private void cargarCategorias() {
         tableModel.setRowCount(0);
         try {
-            List<CategoriaDTO> categorias = frmPrincipal.categoriaNegocio.obtenerCategorias();
+            List<CategoriaDTO> categorias = frmPrincipal.getCategoriaNegocio().obtenerCategorias();
             for (CategoriaDTO cat : categorias) {
                 tableModel.addRow(new Object[]{
                     cat.getId(),
                     cat.getNombreCategoria(),
                     cat.getDescripcionCategoria(),
-                    cat.getImagenCategoria(),
+                    extraerNombreArchivo(cat.getImagenCategoria()),
                     "Editar",
                     "Eliminar"
                 });
@@ -141,31 +224,17 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
     private void editarCategoria(int row) {
         Long id = (Long) tableModel.getValueAt(row, 0);
         try {
-            for (CategoriaDTO cat : frmPrincipal.categoriaNegocio.obtenerCategorias()) {
+            for (CategoriaDTO cat : frmPrincipal.getCategoriaNegocio().obtenerCategorias()) {
                 if (cat.getId().equals(id)) {
-                    this.categoriaSeleccionada = cat;
+                    categoriaSeleccionada = cat;
                     txtNombreCategoria.setText(cat.getNombreCategoria());
                     txtDescripcion.setText(cat.getDescripcionCategoria());
-
-                    String ruta = cat.getImagenCategoria();
-                    if (ruta != null && !ruta.isEmpty()) {
-                        this.imagen = ruta;
-
-                        if (lblImagen.getWidth() > 0 && lblImagen.getHeight() > 0) {
-                            cargarImagenEnLabel(ruta);
-                        } else {
-                            lblImagen.addComponentListener(new ComponentAdapter() {
-                                @Override
-                                public void componentResized(ComponentEvent e) {
-                                    cargarImagenEnLabel(ruta);
-                                    lblImagen.removeComponentListener(this);
-                                }
-                            });
-                        }
+                    rutaImagenSeleccionada = cat.getImagenCategoria();
+                    if (rutaImagenSeleccionada != null && !rutaImagenSeleccionada.isEmpty()) {
+                        cargarImagenEnLabel(rutaImagenSeleccionada);
                     } else {
                         lblImagen.setIcon(null);
                         lblImagen.setText("");
-                        this.imagen = null;
                     }
                     break;
                 }
@@ -176,24 +245,25 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
     }
 
     private void cargarImagenEnLabel(String rutaRelativa) {
-        File file = new File("src/main/resources" + rutaRelativa);
-        if (file.exists()) {
-            ImageIcon icon = new ImageIcon(file.getAbsolutePath());
-            Image img = icon.getImage().getScaledInstance(480, 600, Image.SCALE_SMOOTH);
-            lblImagen.setIcon(new ImageIcon(img));
-            lblImagen.setText("");
+        File archivo = new File("imagenes/" + rutaRelativa);
+        if (archivo.exists()) {
+            ImageIcon icon = new ImageIcon(archivo.getAbsolutePath());
+            Image scaled = getHighQualityScaledImage(icon.getImage(), 480, 600);
+            lblImagen.setIcon(new ImageIcon(scaled));
         } else {
             lblImagen.setIcon(null);
-            lblImagen.setText("Imagen no encontrada");
         }
     }
 
     private void eliminarCategoria(int row) {
         Long id = (Long) tableModel.getValueAt(row, 0);
-        int confirm = JOptionPane.showConfirmDialog(this, "¿Eliminar esta categoría?", "Confirmar", JOptionPane.YES_NO_OPTION);
-        if (confirm == JOptionPane.YES_OPTION) {
+        if (JOptionPane.showConfirmDialog(this, "¿Eliminar esta categoría?", "Confirmar", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
             try {
-                frmPrincipal.categoriaNegocio.eliminarCategoria(id);
+                frmPrincipal.getCategoriaNegocio().eliminarCategoria(id);
+                if (categoriaSeleccionada != null && categoriaSeleccionada.getId().equals(id)) {
+                    categoriaSeleccionada = null;
+                    limpiarFormulario();
+                }
                 cargarCategorias();
             } catch (NegocioException e) {
                 JOptionPane.showMessageDialog(this, "No se puede eliminar la categoría: elimine primero los productos relacionados.");
@@ -202,13 +272,41 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
     }
 
     private void limpiarFormulario() {
+        categoriaSeleccionada = null;
         txtNombreCategoria.setText("");
         txtDescripcion.setText("");
-        lblImagen.setText("");
+        rutaImagenSeleccionada = null;
+        imagenSeleccionadaBuffered = null;
+        URL url = getClass().getResource("/images/1.png");
+        if (url != null) {
+            ImageIcon icon = new ImageIcon(url);
+            Image img = icon.getImage().getScaledInstance(480, 600, Image.SCALE_SMOOTH);
+            lblImagen.setIcon(new ImageIcon(img));
+        } else {
+            lblImagen.setIcon(null);
+        }
+    }
+
+    private String extraerNombreArchivo(String ruta) {
+        if (ruta == null || ruta.isEmpty()) {
+            return "";
+        }
+        return new File(ruta).getName();
+    }
+
+    private BufferedImage aplicarMarco(BufferedImage base, BufferedImage marco) {
+        BufferedImage combinado = new BufferedImage(base.getWidth(), base.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = combinado.createGraphics();
+        g.drawImage(base, 0, 0, null);
+        g.drawImage(marco, 0, 0, base.getWidth(), base.getHeight(), null);
+        g.dispose();
+        return combinado;
     }
 
     /**
-     * This method is called from within the constructor to initialize the form. WARNING: Do NOT modify this code. The content of this method is always regenerated by the Form Editor.
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -260,6 +358,8 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
 
         jPanel3.setBackground(new java.awt.Color(255, 255, 255));
 
+        tblCategorias.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
+        tblCategorias.setForeground(new java.awt.Color(176, 50, 53));
         tblCategorias.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null, null, null},
@@ -281,7 +381,7 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
         });
         jScrollPane2.setViewportView(tblCategorias);
 
-        jLabel4.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
+        jLabel4.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
         jLabel4.setText("Descripción:");
 
         txtDescripcion.setColumns(20);
@@ -291,7 +391,7 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
 
         txtNombreCategoria.setFont(new java.awt.Font("Helvetica Neue", 0, 18)); // NOI18N
 
-        jLabel3.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
+        jLabel3.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
         jLabel3.setText("Nombre:");
 
         btnConfirmar.setBackground(new java.awt.Color(0, 0, 0));
@@ -325,7 +425,7 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(txtNombreCategoria)
-                                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 501, Short.MAX_VALUE)))
+                                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 580, Short.MAX_VALUE)))
                             .addComponent(btnConfirmar, javax.swing.GroupLayout.PREFERRED_SIZE, 586, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(122, 122, 122))))
         );
@@ -344,7 +444,7 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
                 .addComponent(btnConfirmar, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(35, 35, 35)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 482, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(61, Short.MAX_VALUE))
+                .addContainerGap(54, Short.MAX_VALUE))
         );
 
         lblImagen.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/1.png"))); // NOI18N
@@ -375,7 +475,7 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
                         .addComponent(btnAgregarImagen, javax.swing.GroupLayout.PREFERRED_SIZE, 421, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(100, 100, 100)))
                 .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(42, Short.MAX_VALUE))
+                .addContainerGap(48, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -400,7 +500,19 @@ public class PnlAnadirCategoria extends javax.swing.JPanel {
     private void btnAgregarImagenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarImagenActionPerformed
         seleccionarImagen();
     }//GEN-LAST:event_btnAgregarImagenActionPerformed
+    private Image getHighQualityScaledImage(Image srcImg, int w, int h) {
+        BufferedImage resizedImg = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = resizedImg.createGraphics();
 
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        g2.drawImage(srcImg, 0, 0, w, h, null);
+        g2.dispose();
+
+        return resizedImg;
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAgregarImagen;

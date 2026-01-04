@@ -1,10 +1,12 @@
 package presentacion;
 
+import com.itextpdf.text.Font;
 import com.mycompany.chazzboutiquenegocio.dtos.CategoriaDTO;
 import com.mycompany.chazzboutiquenegocio.dtos.ProductoDTO;
 import com.mycompany.chazzboutiquenegocio.dtos.ProveedorDTO;
 import com.mycompany.chazzboutiquenegocio.dtos.VarianteProductoDTO;
 import com.mycompany.chazzboutiquenegocio.excepciones.NegocioException;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.math.BigDecimal;
 import java.util.List;
@@ -14,6 +16,7 @@ import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import utils.ButtonEditor;
 import utils.ButtonRenderer;
 
@@ -43,7 +46,32 @@ public class PnlAnadirProducto extends javax.swing.JPanel {
         };
 
         tblProductos.setModel(tableModel);
+        tblProductos.setDefaultRenderer(Object.class, new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
 
+                java.awt.Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+                if (value instanceof String && column != 6 && column != 7) { // excluye columnas "Editar" y "Eliminar"
+                    String textoOriginal = (String) value;
+                    String textoFormateado = formatearTitulo(textoOriginal);
+                    setText(textoFormateado);
+                }
+
+                return c;
+            }
+        });
+
+        // Ajustar altura de filas para el spinner
+        tblProductos.setRowHeight(40);
+
+        // Configurar header
+        JTableHeader header = tblProductos.getTableHeader();
+        header.setFont(new java.awt.Font("Segoe UI", Font.BOLD, 18));
+        header.setForeground(Color.WHITE);
+        header.setBackground(Color.BLACK);
+        header.setPreferredSize(new Dimension(header.getWidth(), 24));
         // Configurar renderers y editores para botones
         tblProductos.getColumn("Editar").setCellRenderer(new ButtonRenderer("Editar"));
         tblProductos.getColumn("Eliminar").setCellRenderer(new ButtonRenderer("Eliminar"));
@@ -99,7 +127,7 @@ public class PnlAnadirProducto extends javax.swing.JPanel {
 
     private void cargarCategorias() {
         try {
-            List<CategoriaDTO> categorias = frmPrincipal.categoriaNegocio.obtenerCategorias();
+            List<CategoriaDTO> categorias = frmPrincipal.getCategoriaNegocio().obtenerCategorias();
             cbxCategoria.removeAllItems();
             for (CategoriaDTO categoria : categorias) {
                 cbxCategoria.addItem(categoria);
@@ -111,7 +139,7 @@ public class PnlAnadirProducto extends javax.swing.JPanel {
 
     private void cargarProveedores() {
         try {
-            List<ProveedorDTO> proveedores = frmPrincipal.proveedorNegocio.obtenerProveedores();
+            List<ProveedorDTO> proveedores = frmPrincipal.getProveedorNegocio().obtenerProveedores();
             cbxProveedor.removeAllItems();
             for (ProveedorDTO proveedor : proveedores) {
                 cbxProveedor.addItem(proveedor);
@@ -123,9 +151,9 @@ public class PnlAnadirProducto extends javax.swing.JPanel {
 
     private void cargarProductos() {
         try {
-            List<ProductoDTO> productos = frmPrincipal.productoNegocio.obtenerTodosProductos();
-            List<CategoriaDTO> categorias = frmPrincipal.categoriaNegocio.obtenerCategorias();
-            List<ProveedorDTO> proveedores = frmPrincipal.proveedorNegocio.obtenerProveedores();
+            List<ProductoDTO> productos = frmPrincipal.getProductoNegocio().obtenerTodosProductos();
+            List<CategoriaDTO> categorias = frmPrincipal.getCategoriaNegocio().obtenerCategorias();
+            List<ProveedorDTO> proveedores = frmPrincipal.getProveedorNegocio().obtenerProveedores();
 
             tableModel.setRowCount(0);
 
@@ -181,14 +209,14 @@ public class PnlAnadirProducto extends javax.swing.JPanel {
         try {
             if (productoSeleccionado == null) {
                 ProductoDTO nuevoProducto = new ProductoDTO(null, nombre, descripcion, categoria.getId(), proveedor.getId());
-                frmPrincipal.productoNegocio.crearProducto(nuevoProducto);
+                frmPrincipal.getProductoNegocio().crearProducto(nuevoProducto);
             } else {
                 productoSeleccionado.setNombreProducto(nombre);
                 productoSeleccionado.setDescripcionProducto(descripcion);
                 productoSeleccionado.setCategoriaId(categoria.getId());
                 productoSeleccionado.setProveedorId(proveedor.getId());
 
-                frmPrincipal.productoNegocio.actualizarProducto(productoSeleccionado);
+                frmPrincipal.getProductoNegocio().actualizarProducto(productoSeleccionado);
             }
 
             JOptionPane.showMessageDialog(this, "Producto guardado correctamente.");
@@ -203,7 +231,7 @@ public class PnlAnadirProducto extends javax.swing.JPanel {
     private void editarProducto(int row) {
         Long id = (Long) tableModel.getValueAt(row, 0);
         try {
-            for (ProductoDTO prod : frmPrincipal.productoNegocio.obtenerTodosProductos()) {
+            for (ProductoDTO prod : frmPrincipal.getProductoNegocio().obtenerTodosProductos()) {
                 if (prod.getId().equals(id)) {
                     this.productoSeleccionado = prod;
                     txtNombreProducto.setText(prod.getNombreProducto());
@@ -230,12 +258,25 @@ public class PnlAnadirProducto extends javax.swing.JPanel {
         }
     }
 
+    private String formatearTitulo(String texto) {
+        String[] palabras = texto.trim().toLowerCase().split("\\s+");
+        StringBuilder sb = new StringBuilder();
+        for (String palabra : palabras) {
+            if (palabra.length() > 0) {
+                sb.append(Character.toUpperCase(palabra.charAt(0)));
+                sb.append(palabra.substring(1));
+                sb.append(" ");
+            }
+        }
+        return sb.toString().trim();
+    }
+
     private void eliminarProducto(int row) {
         Long id = (Long) tableModel.getValueAt(row, 0);
         int confirm = JOptionPane.showConfirmDialog(this, "¿Eliminar este producto?", "Confirmar", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
             try {
-                frmPrincipal.productoNegocio.eliminarProducto(id);
+                frmPrincipal.getProductoNegocio().eliminarProducto(id);
                 JOptionPane.showMessageDialog(this, "Producto eliminado correctamente.");
                 limpiarCampos();
                 cargarProductos();
@@ -308,12 +349,12 @@ public class PnlAnadirProducto extends javax.swing.JPanel {
 
         jPanel2.setBackground(new java.awt.Color(255, 255, 255));
 
-        jLabel2.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
+        jLabel2.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
         jLabel2.setText("Categoría:");
 
         txtNombreProducto.setFont(new java.awt.Font("Helvetica Neue", 0, 18)); // NOI18N
 
-        jLabel3.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
+        jLabel3.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
         jLabel3.setText("Nombre:");
 
         txtDescripcion.setColumns(20);
@@ -321,8 +362,16 @@ public class PnlAnadirProducto extends javax.swing.JPanel {
         txtDescripcion.setRows(5);
         jScrollPane1.setViewportView(txtDescripcion);
 
-        jLabel4.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
+        jLabel4.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
         jLabel4.setText("Descripción:");
+
+        cbxProveedor.setBackground(new java.awt.Color(255, 255, 254));
+        cbxProveedor.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        cbxProveedor.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbxProveedorActionPerformed(evt);
+            }
+        });
 
         btnConfirmar.setBackground(new java.awt.Color(0, 0, 0));
         btnConfirmar.setFont(new java.awt.Font("Helvetica Neue", 0, 24)); // NOI18N
@@ -335,11 +384,16 @@ public class PnlAnadirProducto extends javax.swing.JPanel {
             }
         });
 
-        jLabel5.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
+        jLabel5.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
         jLabel5.setText("Proveedor:");
+
+        cbxCategoria.setBackground(new java.awt.Color(255, 255, 254));
+        cbxCategoria.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
 
         jPanel3.setBackground(new java.awt.Color(255, 255, 255));
 
+        tblProductos.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        tblProductos.setForeground(new java.awt.Color(176, 50, 53));
         tblProductos.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
@@ -364,7 +418,7 @@ public class PnlAnadirProducto extends javax.swing.JPanel {
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 778, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 735, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -373,56 +427,48 @@ public class PnlAnadirProducto extends javax.swing.JPanel {
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGap(22, 22, 22)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel4)
-                            .addComponent(jLabel3)
-                            .addComponent(jLabel2)
-                            .addComponent(jLabel5))
-                        .addGap(18, 18, 18)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(cbxCategoria, javax.swing.GroupLayout.Alignment.LEADING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 437, Short.MAX_VALUE)
-                            .addComponent(txtNombreProducto, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cbxProveedor, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGap(22, 22, 22))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(btnConfirmar, javax.swing.GroupLayout.PREFERRED_SIZE, 586, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(49, 49, 49)))
+                .addGap(126, 126, 126)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel2)
+                    .addComponent(jLabel4)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 437, Short.MAX_VALUE)
+                    .addComponent(txtNombreProducto, javax.swing.GroupLayout.DEFAULT_SIZE, 437, Short.MAX_VALUE)
+                    .addComponent(jLabel3)
+                    .addComponent(cbxCategoria, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel5)
+                    .addComponent(cbxProveedor, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnConfirmar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(78, 78, 78)
                 .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(33, Short.MAX_VALUE))
+                .addContainerGap(105, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(45, 45, 45)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(txtNombreProducto, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addGap(56, 56, 56)
-                                .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addGap(40, 40, 40)
-                                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(25, 25, 25)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(cbxCategoria, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(32, 32, 32)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(cbxProveedor, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(49, 49, 49)
-                        .addComponent(btnConfirmar, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(77, 77, 77)
+                        .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGap(38, 38, 38)
+                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtNombreProducto, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cbxCategoria, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(30, 30, 30)
+                        .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cbxProveedor, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(59, 59, 59)
+                        .addComponent(btnConfirmar, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addGap(116, 116, 116))
         );
 
@@ -432,6 +478,10 @@ public class PnlAnadirProducto extends javax.swing.JPanel {
     private void btnConfirmarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConfirmarActionPerformed
         agregarProducto();
     }//GEN-LAST:event_btnConfirmarActionPerformed
+
+    private void cbxProveedorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxProveedorActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cbxProveedorActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
