@@ -8,8 +8,9 @@ import com.mycompany.chazzboutiquepersistencia.conexion.IConexionBD;
 import com.mycompany.chazzboutiquepersistencia.dominio.DetalleVenta;
 import com.mycompany.chazzboutiquepersistencia.excepciones.PersistenciaException;
 import com.mycompany.chazzboutiquepersistencia.interfacesDAO.IDetalleVentaDAO;
-import javax.persistence.EntityManager;
-import javax.persistence.EntityTransaction;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityTransaction;
+
 
 /**
  *

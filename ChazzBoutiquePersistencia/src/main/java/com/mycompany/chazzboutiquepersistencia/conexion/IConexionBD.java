@@ -4,7 +4,8 @@
  */
 package com.mycompany.chazzboutiquepersistencia.conexion;
 
-import javax.persistence.EntityManager;
+import jakarta.persistence.EntityManager;
+
 
 /**
  *

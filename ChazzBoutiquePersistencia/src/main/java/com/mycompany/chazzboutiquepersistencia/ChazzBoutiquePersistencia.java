@@ -6,19 +6,13 @@ package com.mycompany.chazzboutiquepersistencia;
 import com.mycompany.chazzboutiquepersistencia.conexion.ConexionBD;
 import com.mycompany.chazzboutiquepersistencia.conexion.IConexionBD;
 import com.mycompany.chazzboutiquepersistencia.daos.CategoriaDAO;
-import com.mycompany.chazzboutiquepersistencia.daos.ProductoDAO;
 import com.mycompany.chazzboutiquepersistencia.dominio.Categoria;
-import com.mycompany.chazzboutiquepersistencia.dominio.Producto;
-import com.mycompany.chazzboutiquepersistencia.dominio.Proveedor;
-import com.mycompany.chazzboutiquepersistencia.dominio.Usuario;
 import com.mycompany.chazzboutiquepersistencia.excepciones.PersistenciaException;
 import com.mycompany.chazzboutiquepersistencia.interfacesDAO.ICategoriaDAO;
-import com.mycompany.chazzboutiquepersistencia.interfacesDAO.IProductoDAO;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.Persistence;
+
 
 /**
  *

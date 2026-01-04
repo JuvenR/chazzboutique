@@ -9,12 +9,13 @@ import com.mycompany.chazzboutiquepersistencia.dominio.Producto;
 import com.mycompany.chazzboutiquepersistencia.dtos.FiltroProductoDTO;
 import com.mycompany.chazzboutiquepersistencia.excepciones.PersistenciaException;
 import com.mycompany.chazzboutiquepersistencia.interfacesDAO.IProductoDAO;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityTransaction;
+import jakarta.persistence.TypedQuery;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.persistence.EntityManager;
-import javax.persistence.EntityTransaction;
-import javax.persistence.TypedQuery;
+
 
 /**
  *

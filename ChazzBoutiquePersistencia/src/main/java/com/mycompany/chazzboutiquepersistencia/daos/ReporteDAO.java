@@ -9,18 +9,16 @@ import com.mycompany.chazzboutiquepersistencia.dtoReportes.ReporteCategoriaDTO;
 import com.mycompany.chazzboutiquepersistencia.dtoReportes.ReporteInventarioDTO;
 import com.mycompany.chazzboutiquepersistencia.dtoReportes.ReporteProductoDTO;
 import com.mycompany.chazzboutiquepersistencia.dtoReportes.ReporteVentaDTO;
-import com.mycompany.chazzboutiquepersistencia.dtos.ReporteVentaResultadoDTO;
-import com.mycompany.chazzboutiquepersistencia.dtos.ReporteVentasDTO;
-import com.mycompany.chazzboutiquepersistencia.excepciones.PersistenciaException;
 import com.mycompany.chazzboutiquepersistencia.interfacesDAO.IReporteDAO;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.NonUniqueResultException;
+import jakarta.persistence.PersistenceException;
+import jakarta.persistence.TypedQuery;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.NonUniqueResultException;
-import javax.persistence.PersistenceException;
-import javax.persistence.TypedQuery;
+
 
 /**
  *
