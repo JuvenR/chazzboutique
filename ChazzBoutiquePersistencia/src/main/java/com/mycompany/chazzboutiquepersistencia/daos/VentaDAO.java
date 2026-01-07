@@ -48,4 +48,31 @@ public class VentaDAO implements IVentaDAO {
         }
     }
 
+    @Override
+    public Venta buscarPorId(Long id) throws PersistenciaException {
+        EntityManager em = conexionBD.getEntityManager();
+        try {
+            return em.createQuery(
+                    "SELECT v FROM Venta v "
+                    + "LEFT JOIN FETCH v.detallesVentas d "
+                    + // Venta.detallesVentas
+                    "LEFT JOIN FETCH d.varianteProducto vp "
+                    + // DetalleVenta.varianteProducto
+                    "LEFT JOIN FETCH vp.producto p "
+                    + // VarianteProducto.producto
+                    "LEFT JOIN FETCH v.usuario u "
+                    + // Venta.usuario
+                    "WHERE v.id = :id", Venta.class
+            ).setParameter("id", id)
+                    .getSingleResult();
+
+        } catch (javax.persistence.NoResultException e) {
+            return null;
+        } catch (Exception e) {
+            throw new PersistenciaException("Error buscando venta por id: " + e.getMessage(), e);
+        } finally {
+            em.close();
+        }
+    }
+
 }

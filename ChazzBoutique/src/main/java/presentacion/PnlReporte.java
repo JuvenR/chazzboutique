@@ -6,6 +6,7 @@ import com.mycompany.chazzboutiquepersistencia.dtoReportes.ReporteCategoriaDTO;
 import com.mycompany.chazzboutiquepersistencia.dtoReportes.ReporteInventarioDTO;
 import com.mycompany.chazzboutiquepersistencia.dtoReportes.ReporteProductoDTO;
 import com.mycompany.chazzboutiquepersistencia.dtoReportes.ReporteVentaDTO;
+import javax.persistence.PersistenceException;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.math.RoundingMode;

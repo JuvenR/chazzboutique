@@ -15,4 +15,6 @@ public interface IVentaDAO {
 
     public Venta registrarVenta(Venta venta) throws PersistenciaException;
 
+    Venta buscarPorId(Long id) throws PersistenciaException;
+
 }
