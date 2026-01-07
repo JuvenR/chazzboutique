@@ -1,0 +1,38 @@
+:root{
+  --bg: #f6f7fb;
+  --card: #ffffff;
+  --text: #101828;
+  --muted:#667085;
+  --border:#e6e8ef;
+  --shadow: 0 16px 40px rgba(16,24,40,.08);
+  --brand:#b03235;
+  --brand2:#7f1d1f;
+}
+
+*{ box-sizing: border-box; }
+html,body,#root{ height: 100%; }
+body{
+  margin:0;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  color: var(--text);
+  background: var(--bg);
+}
+
+.app-shell{
+  height: 100%;
+  display:flex;
+}
+
+.app-content{
+  flex: 1;
+  overflow: auto;
+  padding: 22px;
+}
+
+.page-placeholder{
+  background: var(--card);
+  border:1px solid var(--border);
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow: var(--shadow);
+}
