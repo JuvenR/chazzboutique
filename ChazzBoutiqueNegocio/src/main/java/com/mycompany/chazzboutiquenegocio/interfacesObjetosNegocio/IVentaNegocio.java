@@ -13,4 +13,6 @@ import com.mycompany.chazzboutiquenegocio.excepciones.NegocioException;
  */
 public interface IVentaNegocio {
      public VentaDTO registrarVenta( VentaDTO ventaDTO) throws NegocioException;
+     public VentaDTO obtenerVentaConDetalles(Long ventaId) throws NegocioException;
+
 }
