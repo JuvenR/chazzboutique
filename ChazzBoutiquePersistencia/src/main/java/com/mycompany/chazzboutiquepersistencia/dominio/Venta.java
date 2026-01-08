@@ -36,9 +36,9 @@ public class Venta implements Serializable {
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
-    @OneToMany(mappedBy = "venta", cascade = CascadeType.PERSIST)
-    private List<DetalleVenta> detallesVentas;
-    
+    @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DetalleVenta> detallesVentas = new java.util.ArrayList<>();
+
     @Column(name = "fechaVenta", nullable = false)
     private LocalDate fechaVenta;
 
@@ -48,7 +48,14 @@ public class Venta implements Serializable {
     @Column(name = "estadoVenta", nullable = false)
     private String estadoVenta;
 
-   
+    @Column(name = "descuento", nullable = false)
+    private BigDecimal descuento;
+
+    @Column(name = "montoPago", nullable = false)
+    private BigDecimal montoPago;
+
+    @Column(name = "cambio", nullable = false)
+    private BigDecimal cambio;
 
     public Venta() {
     }
@@ -101,5 +108,33 @@ public class Venta implements Serializable {
         this.estadoVenta = estadoVenta;
     }
 
-  
+    public void addDetalle(DetalleVenta d) {
+        detallesVentas.add(d);
+        d.setVenta(this);
+    }
+
+    public BigDecimal getDescuento() {
+        return descuento;
+    }
+
+    public void setDescuento(BigDecimal descuento) {
+        this.descuento = descuento;
+    }
+
+    public BigDecimal getMontoPago() {
+        return montoPago;
+    }
+
+    public void setMontoPago(BigDecimal montoPago) {
+        this.montoPago = montoPago;
+    }
+
+    public BigDecimal getCambio() {
+        return cambio;
+    }
+
+    public void setCambio(BigDecimal cambio) {
+        this.cambio = cambio;
+    }
+
 }

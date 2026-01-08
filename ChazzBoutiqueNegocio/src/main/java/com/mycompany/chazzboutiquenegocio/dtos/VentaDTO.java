@@ -16,6 +16,7 @@ public class VentaDTO {
 
     private Long id;
     private Long usuarioId;
+    private String vendedorNombre;
     private LocalDate fecha;
     private BigDecimal total;
     private BigDecimal descuento;
@@ -33,6 +34,14 @@ public class VentaDTO {
         this.total = total;
         this.detalles = detalles;
         this.estado = "COMPLETADA"; // Valor por defecto
+    }
+
+    public String getVendedorNombre() {
+        return vendedorNombre;
+    }
+
+    public void setVendedorNombre(String vendedorNombre) {
+        this.vendedorNombre = vendedorNombre;
     }
 
     public Long getId() {

@@ -55,11 +55,15 @@ public class VarianteProductoDAO implements IVarianteProductoDAO {
         EntityManager em = conexionBD.getEntityManager();
         try {
             TypedQuery<VarianteProducto> query = em.createQuery(
-                    "SELECT v FROM VarianteProducto v WHERE v.codigoBarra = :cb AND v.eliminado = false",
+                    "SELECT v FROM VarianteProducto v "
+                    + "JOIN FETCH v.producto p "
+                    + "WHERE v.codigoBarra = :cb AND v.eliminado = false",
                     VarianteProducto.class
             );
             query.setParameter("cb", codigoBarra);
             return query.getSingleResult();
+        } catch (javax.persistence.NoResultException e) {
+            return null; // mejor que truene, así tu negocio decide qué hacer
         } catch (Exception e) {
             throw new PersistenciaException("Error al obtener variante por código de barras", e);
         } finally {
