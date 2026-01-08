@@ -119,6 +119,8 @@ public class VarianteProductoNegocio implements IVarianteProductoNegocio {
                 variante.getUrlImagen()
         );
         dto.setId(variante.getId());
+        dto.setNombreProducto(variante.getProducto() != null ? variante.getProducto().getNombre() : null);
+        
         return dto;
     }
 

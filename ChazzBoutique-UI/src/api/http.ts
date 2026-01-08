@@ -1,7 +1,7 @@
 const API_BASE =
   import.meta.env.DEV
-    ? "" // en dev usamos proxy (/api -> localhost:8080)
-    : (import.meta.env.VITE_API_BASE_URL || ""); // en prod usa env
+    ? "" 
+    : (import.meta.env.VITE_API_BASE_URL || ""); 
 
 type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
 
@@ -24,14 +24,12 @@ async function request<T>(
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
 
-  // Manejo de errores consistente
   if (!res.ok) {
     let msg = `HTTP ${res.status}`;
     try {
       const data = await res.json();
       msg = data?.message || data?.error || msg;
     } catch {
-      // si no es JSON, intenta texto
       try {
         msg = await res.text();
       } catch {}
@@ -39,7 +37,6 @@ async function request<T>(
     throw new Error(msg);
   }
 
-  // Si el backend responde 204 No Content
   if (res.status === 204) return undefined as T;
 
   return (await res.json()) as T;

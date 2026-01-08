@@ -38,9 +38,10 @@
   display:grid;
   grid-template-columns: 1.1fr 1.1fr 1fr .5fr .6fr .8fr;
   gap: 14px;
-  align-items: start; /* antes: end */
+  align-items: start;
 }
 
+/* Asegura layout consistente dentro de cada celda */
 .field{
   display:flex;
   flex-direction:column;
@@ -52,9 +53,10 @@
   display:block;
   font-size: 12px;
   color: var(--muted);
-  margin: 0; 
+  margin: 0;
 }
 
+/* Inputs uniformes */
 .field input{
   width: 100%;
   height: 44px;
@@ -72,11 +74,18 @@
   color:#98a2b3;
 }
 
+.field input:focus{
+  border-color: rgba(176,50,53,.55);
+  box-shadow: 0 0 0 4px rgba(176,50,53,.12);
+}
+
+/* Para que el tip/error/loading no empuje el layout: reserva espacio */
 .field .muted{
-  min-height: 18px; 
+  min-height: 18px;
   line-height: 18px;
 }
 
+/* ==== LABEL + TOGGLE en la misma línea ==== */
 .labelrow{
   display:flex;
   align-items:center;
@@ -90,7 +99,7 @@
   align-items:center;
   color: var(--muted);
   font-size: 12px;
-  margin: 0;         
+  margin: 0;
   white-space: nowrap;
 }
 .toggle input{
@@ -111,6 +120,27 @@
   border:1px solid var(--border);
   box-shadow: inset 0 0 0 2px rgba(0,0,0,.03);
   box-sizing: border-box;
+}
+
+
+
+/* Chrome, Edge, Safari */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button{
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"]{
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.qty,
+.stepper input,
+.paygrid input[type="number"]{
+  font-variant-numeric: tabular-nums;
 }
 
 /* Stepper */
@@ -139,6 +169,11 @@
   text-align:center;
   height: 44px;
   padding:0;
+  outline:none;
+}
+
+.stepper input:focus{
+  box-shadow: inset 0 0 0 2px rgba(176,50,53,.25);
 }
 
 /* Botones */
@@ -247,6 +282,12 @@
   border-radius: 10px;
   border:1px solid var(--border);
   text-align:center;
+  outline:none;
+}
+
+.table tbody td .qty:focus{
+  border-color: rgba(176,50,53,.55);
+  box-shadow: 0 0 0 4px rgba(176,50,53,.12);
 }
 
 .empty{
@@ -308,6 +349,12 @@
   border:1px solid var(--border);
   padding: 0 10px;
   text-align:right;
+  outline:none;
+}
+
+.paygrid input:focus{
+  border-color: rgba(176,50,53,.55);
+  box-shadow: 0 0 0 4px rgba(176,50,53,.12);
 }
 
 .value{
@@ -341,4 +388,133 @@
   background:#fff;
   cursor:pointer;
   font-size: 22px;
+}
+
+/* ===== TOAST ===== */
+.toast{
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  z-index: 9999;
+
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  background: #fff;
+
+  font-size: 14px;
+  font-weight: 700;
+  color: #101828;
+
+  max-width: min(680px, calc(100vw - 24px));
+  width: fit-content;
+  white-space: pre-wrap;
+}
+
+.toast.error{
+  background: rgba(176,50,53,.12);
+  border-color: rgba(176,50,53,.28);
+}
+
+.toast.ok{
+  background: rgba(16,185,129,.12);
+  border-color: rgba(16,185,129,.28);
+}
+
+/* ===== MODAL éxito ===== */
+.modalOverlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(16,24,40,.55);
+  backdrop-filter: blur(6px);
+  z-index: 10000;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  padding: 18px;
+}
+
+.modalCard{
+  width: min(520px, calc(100vw - 24px));
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 30px 90px rgba(16,24,40,.35);
+  padding: 16px;
+}
+
+.modalHead{
+  display:flex;
+  gap: 12px;
+  align-items:center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modalBadge{
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size: 20px;
+  background: rgba(16,185,129,.14);
+  border: 1px solid rgba(16,185,129,.28);
+}
+
+.modalTitle{
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: -.01em;
+}
+
+.modalSub{
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.modalBody{
+  padding: 12px 0;
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+}
+
+.modalRow{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #f9fafb;
+}
+
+.modalRow span{
+  color: #475467;
+  font-size: 13px;
+}
+
+.modalRow b{
+  color: #101828;
+}
+
+.modalActions{
+  display:flex;
+  gap: 10px;
+  justify-content:flex-end;
+  flex-wrap: wrap;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.modalActions .btn-ghost{
+  width: auto;
+  margin-top: 0;
 }

@@ -44,7 +44,6 @@ public class VentaNegocio implements IVentaNegocio {
                 throw new NegocioException("Debe agregar productos a la venta");
             }
 
-            // 1) Validar stock primero
             for (DetalleVentaDTO d : ventaDTO.getDetalles()) {
                 VarianteProducto v = varianteProductoDAO.obtenerPorCodigoBarra(d.getCodigoVariante());
                 if (v.getStock() < d.getCantidad()) {
@@ -52,32 +51,35 @@ public class VentaNegocio implements IVentaNegocio {
                 }
             }
 
-            // 2) Crear venta UNA vez
             Venta venta = new Venta();
             venta.setUsuario(usuarioDAO.buscarPorId(ventaDTO.getUsuarioId()));
             venta.setFechaVenta(LocalDate.now());
             venta.setVentaTotal(ventaDTO.getTotal());
             venta.setEstadoVenta("COMPLETADA");
-
-            venta = ventaDAO.registrarVenta(venta);
-            ventaDTO.setId(venta.getId());
-
-            // 3) Registrar detalles + actualizar stock
+            venta.setDescuento(ventaDTO.getDescuento());
+            venta.setMontoPago(ventaDTO.getMontoPago());
+            venta.setCambio(ventaDTO.getCambio());
+            venta.setVentaTotal(ventaDTO.getTotal());
             for (DetalleVentaDTO d : ventaDTO.getDetalles()) {
                 VarianteProducto v = varianteProductoDAO.obtenerPorCodigoBarra(d.getCodigoVariante());
 
-                DetalleVenta detalle = new DetalleVenta();
-                detalle.setVenta(venta);
-                detalle.setVarianteProducto(v);
-                detalle.setCantidad(d.getCantidad());
-                detalle.setPrecioUnitario(d.getPrecioUnitario());
+                if (v.getStock() < d.getCantidad()) {
+                    throw new NegocioException("Stock insuficiente para: " + v.getProducto().getNombre());
+                }
 
-                detalleVentaDAO.registrarDetalle(detalle);
+                DetalleVenta det = new DetalleVenta();
+                det.setVarianteProducto(v);
+                det.setCantidad(d.getCantidad());
+                det.setPrecioUnitario(d.getPrecioUnitario());
+
+                venta.addDetalle(det);
 
                 v.setStock(v.getStock() - d.getCantidad());
                 varianteProductoDAO.actualizarVarianteProducto(v);
             }
 
+            venta = ventaDAO.registrarVenta(venta);
+            ventaDTO.setId(venta.getId());
             return ventaDTO;
 
         } catch (PersistenciaException ex) {
@@ -88,25 +90,25 @@ public class VentaNegocio implements IVentaNegocio {
     @Override
     public VentaDTO obtenerVentaConDetalles(Long ventaId) throws NegocioException {
         try {
-            Venta venta = ventaDAO.buscarPorId(ventaId); // lo agregamos abajo en el DAO
+            Venta venta = ventaDAO.buscarPorId(ventaId);
             if (venta == null) {
                 throw new NegocioException("No existe la venta con id: " + ventaId);
             }
 
-            // Si tu JPA trae detalles lazy, el DAO debe traerlos con join fetch (abajo).
-            // Aquí ya asumimos que vienen cargados.
             VentaDTO dto = new VentaDTO();
             dto.setId(venta.getId());
             dto.setUsuarioId(venta.getUsuario().getId());
-            dto.setFecha(venta.getFechaVenta());              // si tu dto usa LocalDate
-            dto.setTotal(venta.getVentaTotal());              // ajusta nombre si difiere
+            dto.setVendedorNombre(venta.getUsuario().getNombreUsuario());
+            dto.setDescuento(venta.getDescuento());
+            dto.setMontoPago(venta.getMontoPago());
+            dto.setCambio(venta.getCambio());
+
+            dto.setFecha(venta.getFechaVenta());
+            dto.setTotal(venta.getVentaTotal());
             dto.setEstado(venta.getEstadoVenta());
 
-            // Si guardas descuento/montoPago/cambio en venta, mapea también.
-            // Si no existen en entidad, no los inventes; el ticket puede recalcular.
-            // Detalles
             java.util.List<DetalleVentaDTO> detalles = new java.util.ArrayList<>();
-            for (DetalleVenta det : venta.getDetallesVentas()) {    // ajusta getter real (ej: getDetalleVentas)
+            for (DetalleVenta det : venta.getDetallesVentas()) {
                 DetalleVentaDTO d = new DetalleVentaDTO();
                 d.setCantidad(det.getCantidad());
                 d.setPrecioUnitario(det.getPrecioUnitario());
