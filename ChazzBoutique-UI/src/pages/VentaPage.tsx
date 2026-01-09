@@ -309,7 +309,6 @@ export default function VentaPage() {
       setPrecio(0);
       setColor("#ffffff");
       const msg = (e as Error).message || "No encontrado";
-      setLookupError(msg);
       showToast("error", msg);
     } finally {
       setLoadingLookup(false);
@@ -368,7 +367,6 @@ export default function VentaPage() {
     }
   }
 
-  // ✅ Key fix: cuando eliges una VarianteRow, haces lookup por código para obtener VarianteLookup completo.
   async function onPickVariante(v: VarianteRow) {
     setVarModalOpen(false);
 
@@ -563,125 +561,120 @@ export default function VentaPage() {
                 placeholder="Escanea / escribe y presiona Enter"
                 disabled={modoNombre || loadingLookup || loadingPay}
               />
-              {!modoNombre && (
-                <div className="muted" style={{ marginTop: 6 }}>
-                  Tip: escribe/escanea y presiona <b>Enter</b> para buscar.
+                <div className={`collapse ${modoNombre ? "isClosed" : "isOpen"}`}>
+                    <div className="muted" style={{ marginTop: 6 }}>
+                        Tip: escribe/escanea y presiona <b>Enter</b> para buscar.
+                    </div>
                 </div>
-              )}
+
               {lookupError && !modoNombre && (
                 <div className="muted" style={{ color: "#b03235", marginTop: 6 }}>
                   {lookupError}
                 </div>
               )}
-              {loadingLookup && !modoNombre && (
-                <div className="muted" style={{ marginTop: 6 }}>Buscando…</div>
-              )}
+        
             </div>
 
-            <div className="field" style={{ position: "relative" }}>
-              <div className="labelrow">
+           <div className="field" style={{ position: "relative" }}>
                 <label>Nombre</label>
 
-                <div className="toggle">
-                  <input
+               <input
+                className={!modoNombre ? "inputLikeDisabled" : ""}
+                value={modoNombre ? nameQuery : nombre}
+                readOnly={!modoNombre}
+                onChange={(e) => {
+                    if (!modoNombre) return;
+                    setNameQuery(e.target.value);
+                    setNameOpen(true);
+                }}
+                onFocus={() => {
+                    if (modoNombre && nameOptions.length > 0) setNameOpen(true);
+                }}
+                onBlur={() => window.setTimeout(() => setNameOpen(false), 120)}
+                onKeyDown={(e) => {
+                    if (!modoNombre) return;
+                    if (e.key === "Enter") onEnterNombre();
+                    if (e.key === "Escape") setNameOpen(false);
+                }}
+                placeholder={modoNombre ? "Escribe nombre y presiona Enter" : "Buscar por nombre (habilita toggle)"}
+                disabled={loadingPay}
+                />
+
+
+                {/* Toggle abajo del input */}
+                <div className="toggle toggle--below">
+                    <input
                     id="toggleNombre"
                     type="checkbox"
                     checked={modoNombre}
                     onChange={(e) => {
-                      const v = e.target.checked;
-                      setModoNombre(v);
+                        const v = e.target.checked;
+                        setModoNombre(v);
 
-                      setCodigo("");
-                      setNombre("");
-                      setPrecio(0);
-                      setColor("#ffffff");
-                      setCantidadStr("1");
-                      setVariante(null);
-                      setLookupError(null);
+                        setCodigo("");
+                        setNombre("");
+                        setPrecio(0);
+                        setColor("#ffffff");
+                        setCantidadStr("1");
+                        setVariante(null);
+                        setLookupError(null);
 
-                      setPickedProducto(null);
-                      setNameQuery("");
-                      setNameOptions([]);
-                      setNameOpen(false);
-                      setNameError(null);
+                        setPickedProducto(null);
+                        setNameQuery("");
+                        setNameOptions([]);
+                        setNameOpen(false);
+                        setNameError(null);
                     }}
-                  />
-                  <label htmlFor="toggleNombre">Habilitar</label>
+                    />
+                    <label htmlFor="toggleNombre">Habilitar búsqueda por nombre</label>
                 </div>
-              </div>
 
-              <input
-                value={modoNombre ? nameQuery : nombre}
-                onChange={(e) => {
-                  if (!modoNombre) {
-                    setNombre(e.target.value);
-                    return;
-                  }
-                  setNameQuery(e.target.value);
-                  setNameOpen(true);
-                }}
-                onFocus={() => {
-                  if (modoNombre && nameOptions.length > 0) setNameOpen(true);
-                }}
-                onBlur={() => {
-                  window.setTimeout(() => setNameOpen(false), 120);
-                }}
-                onKeyDown={(e) => {
-                  if (!modoNombre) return;
-                  if (e.key === "Enter") onEnterNombre();
-                  if (e.key === "Escape") setNameOpen(false);
-                }}
-                placeholder={modoNombre ? "Escribe nombre y presiona Enter" : "Buscar por nombre (habilita toggle)"}
-                disabled={!modoNombre || loadingPay}
-              />
+                {modoNombre && (
+                    <>
+                    {nameError && (
+                        <div className="muted" style={{ color: "#b03235", marginTop: 6 }}>
+                        {nameError}
+                        </div>
+                    )}
 
-              {modoNombre && (
-                <>
-                  {nameError && (
-                    <div className="muted" style={{ color: "#b03235", marginTop: 6 }}>
-                      {nameError}
-                    </div>
-                  )}
-
-                  {nameOpen && nameOptions.length > 0 && (
-                    <div
-                      className="card"
-                      style={{
-                        position: "absolute",
-                        zIndex: 30,
-                        left: 0,
-                        right: 0,
-                        top: "100%",
-                        marginTop: 8,
-                        padding: 8,
-                        maxHeight: 260,
-                        overflow: "auto",
-                      }}
-                    >
-                      {nameOptions.map((p) => (
-                        <button
-                          key={p.id}
-                          type="button"
-                          className="btn btn-ghost"
-                          style={{
-                            width: "100%",
-                            justifyContent: "flex-start",
-                            padding: "10px 12px",
-                            borderRadius: 10,
-                          }}
-                          onMouseDown={(ev) => ev.preventDefault()}
-                          onClick={() => openVariantesForProducto(p)}
+                    {nameOpen && nameOptions.length > 0 && (
+                        <div
+                        className="card"
+                        style={{
+                            position: "absolute",
+                            zIndex: 30,
+                            left: 0,
+                            right: 0,
+                            top: "100%",
+                            marginTop: 8,
+                            padding: 8,
+                            maxHeight: 260,
+                            overflow: "auto",
+                        }}
                         >
-                          {p.nombreProducto}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                        {nameOptions.map((p) => (
+                            <button
+                            key={p.id}
+                            type="button"
+                            className="btn btn-ghost"
+                            style={{
+                                width: "100%",
+                                justifyContent: "flex-start",
+                                padding: "10px 12px",
+                                borderRadius: 10,
+                            }}
+                            onMouseDown={(ev) => ev.preventDefault()}
+                            onClick={() => openVariantesForProducto(p)}
+                            >
+                            {p.nombreProducto}
+                            </button>
+                        ))}
+                        </div>
+                    )}
+                    </>
+                )}
+                </div>
 
-                 
-                </>
-              )}
-            </div>
 
             <div className="field">
               <label>Precio</label>

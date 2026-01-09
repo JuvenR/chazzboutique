@@ -1,3 +1,5 @@
+import { useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import "./Sidebar.css";
 
 export type MenuKey = "home" | "venta" | "categorias" | "productos" | "reportes";
@@ -6,6 +8,68 @@ type Props = {
   active: MenuKey;
   onChange: (k: MenuKey) => void;
 };
+
+function Icon({ name, active }: { name: MenuKey; active: boolean }) {
+  const common = {
+    width: 18,
+    height: 18,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    className: `sb__icon ${active ? "is-active" : ""}`,
+    "aria-hidden": true,
+  };
+
+  switch (name) {
+    case "home":
+      return (
+        <svg {...common}>
+          <path d="M3 10.5 12 3l9 7.5" />
+          <path d="M5 10v10h14V10" />
+          <path d="M9 20v-6h6v6" />
+        </svg>
+      );
+    case "venta":
+      return (
+        <svg {...common}>
+          <circle cx="9" cy="20" r="1" />
+          <circle cx="17" cy="20" r="1" />
+          <path d="M3 4h2l2.4 12.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 2-1.6L22 8H6.2" />
+        </svg>
+      );
+    case "categorias":
+      return (
+        <svg {...common}>
+          <rect x="3" y="3" width="8" height="8" rx="2" />
+          <rect x="13" y="3" width="8" height="8" rx="2" />
+          <rect x="3" y="13" width="8" height="8" rx="2" />
+          <rect x="13" y="13" width="8" height="8" rx="2" />
+        </svg>
+      );
+    case "productos":
+      return (
+        <svg {...common}>
+          <path d="M20.6 13.1 12 21.7a2 2 0 0 1-2.8 0L3 15.5V3h12.5l5.1 5.1a2 2 0 0 1 0 2.8Z" />
+          <path d="M7.5 7.5h.01" />
+        </svg>
+      );
+    case "reportes":
+      return (
+        <svg {...common}>
+          <path d="M4 19V5" />
+          <path d="M20 19H4" />
+          <path d="M8 17v-6" />
+          <path d="M12 17V9" />
+          <path d="M16 17v-3" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
 
 const items: { key: MenuKey; label: string }[] = [
   { key: "home", label: "Home" },
@@ -16,30 +80,57 @@ const items: { key: MenuKey; label: string }[] = [
 ];
 
 export default function Sidebar({ active, onChange }: Props) {
+  const [open, setOpen] = useState(false);
+
+  const dims = useMemo(() => ({ collapsed: 92, expanded: 256 }), []);
+
   return (
-    <aside className="sb">
+    <motion.aside
+      className={`sb sb--unfoldHover ${open ? "is-open" : "is-closed"}`}
+      onHoverStart={() => setOpen(true)}
+      onHoverEnd={() => setOpen(false)}
+      onFocusCapture={() => setOpen(true)}
+      onBlurCapture={(e) => {
+        const next = e.relatedTarget as Node | null;
+        if (!next || !e.currentTarget.contains(next)) setOpen(false);
+      }}
+      animate={{ width: open ? dims.expanded : dims.collapsed }}
+      transition={{ type: "spring", stiffness: 220, damping: 28, mass: 0.8 }}
+    >
       <div className="sb__brand">
-        <div className="sb__logo">CHAZZ</div>
-        <div className="sb__sub">Boutique</div>
+        <img
+          className="sb__brandLogo"
+          src="/images/chazzLogoBlack.png"
+          alt="Chazz Boutique"
+          draggable={false}
+        />
       </div>
 
-      <nav className="sb__nav">
-        {items.map((it) => (
-          <button
-            key={it.key}
-            className={`sb__item ${active === it.key ? "is-active" : ""}`}
-            onClick={() => onChange(it.key)}
-            type="button"
-          >
-            <span className="sb__dot" />
-            <span className="sb__label">{it.label}</span>
-          </button>
-        ))}
+      <nav className="sb__nav" aria-label="Menú">
+        {items.map((it) => {
+          const isActive = active === it.key;
+
+          return (
+            <button
+              key={it.key}
+              type="button"
+              title={it.label}
+              onClick={() => onChange(it.key)}
+              className={`sb__item ${isActive ? "is-active" : ""}`}
+            >
+              <span className="sb__iconWrap" aria-hidden="true">
+                <Icon name={it.key} active={isActive} />
+              </span>
+
+              <span className={`sb__labelSlot ${open ? "is-open" : "is-closed"}`}>
+                <span className="sb__label">{it.label}</span>
+              </span>
+
+              {open && isActive && <span className="sb__activeRail" />}
+            </button>
+          );
+        })}
       </nav>
-
-      <div className="sb__footer">
-        <div className="sb__pill">ChazzBoutique POS</div>
-      </div>
-    </aside>
+    </motion.aside>
   );
 }

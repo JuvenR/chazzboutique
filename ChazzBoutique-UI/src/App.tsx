@@ -7,6 +7,7 @@ export default function App() {
 
   const content = useMemo(() => {
     if (active === "venta") return <VentaPage />;
+
     return (
       <div className="page-placeholder">
         <h1>{active.toUpperCase()}</h1>

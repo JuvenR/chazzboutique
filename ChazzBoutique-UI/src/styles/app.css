@@ -7,10 +7,14 @@
   --shadow: 0 16px 40px rgba(16,24,40,.08);
   --brand:#b03235;
   --brand2:#7f1d1f;
+
+  --sb-collapsed: 92px;
 }
 
 *{ box-sizing: border-box; }
+
 html,body,#root{ height: 100%; }
+
 body{
   margin:0;
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
@@ -20,13 +24,17 @@ body{
 
 .app-shell{
   height: 100%;
+  min-height: 100vh;
   display:flex;
+  align-items: stretch;
 }
 
 .app-content{
   flex: 1;
+  min-width: 0;
   overflow: auto;
   padding: 22px;
+  margin-left: var(--sb-collapsed);
 }
 
 .page-placeholder{
