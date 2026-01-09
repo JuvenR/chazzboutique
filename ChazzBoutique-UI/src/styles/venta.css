@@ -41,7 +41,6 @@
   align-items: start;
 }
 
-/* Asegura layout consistente dentro de cada celda */
 .field{
   display:flex;
   flex-direction:column;
@@ -56,7 +55,6 @@
   margin: 0;
 }
 
-/* Inputs uniformes */
 .field input{
   width: 100%;
   height: 44px;
@@ -74,18 +72,32 @@
   color:#98a2b3;
 }
 
+.field input.inputLikeDisabled{
+  background: #f2f4f7;
+  color:#98a2b3;
+  cursor: not-allowed;
+}
+
+.field input.inputLikeDisabled:focus{
+  border-color: var(--border);
+  box-shadow: none;
+}
+
+.field input.inputLikeDisabled::placeholder{
+  color:#98a2b3;
+}
+
+
 .field input:focus{
   border-color: rgba(176,50,53,.55);
   box-shadow: 0 0 0 4px rgba(176,50,53,.12);
 }
 
-/* Para que el tip/error/loading no empuje el layout: reserva espacio */
 .field .muted{
   min-height: 18px;
   line-height: 18px;
 }
 
-/* ==== LABEL + TOGGLE en la misma línea ==== */
 .labelrow{
   display:flex;
   align-items:center;
@@ -108,11 +120,9 @@
   margin: 0;
 }
 
-/* Tamaños pequeños */
 .field--tiny{ max-width: 220px; }
 .field--actions{ display:flex; flex-direction:column; }
 
-/* Color swatch */
 .swatch{
   height: 44px;
   width: 100%;
@@ -423,7 +433,6 @@ input[type="number"]{
   border-color: rgba(16,185,129,.28);
 }
 
-/* ===== MODAL éxito ===== */
 .modalOverlay{
   position: fixed;
   inset: 0;
@@ -517,4 +526,30 @@ input[type="number"]{
 .modalActions .btn-ghost{
   width: auto;
   margin-top: 0;
+}  
+
+.collapse {
+  overflow: hidden;
+  max-height: 80px;         
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    max-height 220ms ease,
+    opacity 180ms ease,
+    transform 220ms ease;
+  will-change: max-height, opacity, transform;
 }
+
+.collapse.isClosed {
+  max-height: 0px;
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collapse {
+    transition: none;
+  }
+}
+

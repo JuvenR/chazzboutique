@@ -45,10 +45,8 @@ export type VentaResponse = {
   ticket?: { pdfUrl: string };
 };
 
-// Para autocomplete
 export type ProductoLite = { id: number; nombreProducto: string };
 
-// ===== Endpoints existentes =====
 
 export function buscarVariantePorCodigo(codigo: string) {
   return http.get<VarianteLookup>(
@@ -61,7 +59,6 @@ export function crearVenta(payload: CrearVentaRequest) {
 }
 
 export function ticketPdfUrl(ventaId: number) {
-  // En DEV hardcode a localhost (como ya lo tenías)
   const base = import.meta.env.DEV
     ? "http://localhost:8080"
     : (import.meta.env.VITE_API_BASE_URL || "");
@@ -69,10 +66,7 @@ export function ticketPdfUrl(ventaId: number) {
   return `${base}/api/ventas/${ventaId}/ticket.pdf`;
 }
 
-// ===== Nuevo: búsqueda por nombre (autocomplete) =====
-// OJO: Ajusta la ruta según tu backend real.
-// Si tu endpoint es: GET /api/productos/buscar?nombre=...
-// se queda así:
+
 export function buscarProductosPorNombre(nombre: string, limit = 15) {
   const q = nombre.trim();
   if (!q) return Promise.resolve([] as ProductoLite[]);
@@ -82,9 +76,7 @@ export function buscarProductosPorNombre(nombre: string, limit = 15) {
   );
 }
 
-// ===== Nuevo: variantes por producto =====
-// OJO: Ajusta la ruta según tu backend real.
-// GET /api/productos/{id}/variantes
+
 export function obtenerVariantesPorProducto(productoId: number) {
   return http.get<VarianteRow[]>(
     `/api/productos/${productoId}/variantes`
