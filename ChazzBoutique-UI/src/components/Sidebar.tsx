@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import "./Sidebar.css";
 
@@ -83,54 +83,115 @@ export default function Sidebar({ active, onChange }: Props) {
   const [open, setOpen] = useState(false);
 
   const dims = useMemo(() => ({ collapsed: 92, expanded: 256 }), []);
+  const openDelayMs = 120;
+  const closeDelayMs = 90;
+
+  const tOpen = useRef<number | null>(null);
+  const tClose = useRef<number | null>(null);
+
+  function clearTimers() {
+    if (tOpen.current) window.clearTimeout(tOpen.current);
+    if (tClose.current) window.clearTimeout(tClose.current);
+    tOpen.current = null;
+    tClose.current = null;
+  }
+
+  function scheduleOpen() {
+    if (open) return;
+    if (tOpen.current) return;
+    if (tClose.current) {
+      window.clearTimeout(tClose.current);
+      tClose.current = null;
+    }
+    tOpen.current = window.setTimeout(() => {
+      tOpen.current = null;
+      setOpen(true);
+    }, openDelayMs);
+  }
+
+  function scheduleClose() {
+    if (!open) {
+      if (tOpen.current) {
+        window.clearTimeout(tOpen.current);
+        tOpen.current = null;
+      }
+      return;
+    }
+    if (tClose.current) return;
+    if (tOpen.current) {
+      window.clearTimeout(tOpen.current);
+      tOpen.current = null;
+    }
+    tClose.current = window.setTimeout(() => {
+      tClose.current = null;
+      setOpen(false);
+    }, closeDelayMs);
+  }
 
   return (
-    <motion.aside
-      className={`sb sb--unfoldHover ${open ? "is-open" : "is-closed"}`}
-      onHoverStart={() => setOpen(true)}
-      onHoverEnd={() => setOpen(false)}
-      onFocusCapture={() => setOpen(true)}
-      onBlurCapture={(e) => {
-        const next = e.relatedTarget as Node | null;
-        if (!next || !e.currentTarget.contains(next)) setOpen(false);
-      }}
-      animate={{ width: open ? dims.expanded : dims.collapsed }}
-      transition={{ type: "spring", stiffness: 220, damping: 28, mass: 0.8 }}
-    >
-      <div className="sb__brand">
-        <img
-          className="sb__brandLogo"
-          src="/images/chazzLogoBlack.png"
-          alt="Chazz Boutique"
-          draggable={false}
-        />
-      </div>
+    <>
+    
+      <div
+        className="sb-zone"
+        onMouseEnter={scheduleOpen}
+        onMouseLeave={scheduleClose}
+        aria-hidden="true"
+      />
 
-      <nav className="sb__nav" aria-label="Menú">
-        {items.map((it) => {
-          const isActive = active === it.key;
+      <motion.aside
+        className={`sb ${open ? "is-open" : "is-closed"}`}
+        onMouseEnter={scheduleOpen}
+        onMouseLeave={scheduleClose}
+        onFocusCapture={() => {
+          clearTimers();
+          setOpen(true);
+        }}
+        onBlurCapture={(e) => {
+          const next = e.relatedTarget as Node | null;
+          if (!next || !e.currentTarget.contains(next)) {
+            clearTimers();
+            setOpen(false);
+          }
+        }}
+        animate={{ width: open ? dims.expanded : dims.collapsed }}
+        transition={{ type: "spring", stiffness: 240, damping: 30, mass: 0.9 }}
+        style={{ width: dims.collapsed }}
+      >
+        <div className="sb__brand">
+          <img
+            className="sb__brandLogo"
+            src="/images/chazzLogoBlack.png"
+            alt="Chazz Boutique"
+            draggable={false}
+          />
+        </div>
 
-          return (
-            <button
-              key={it.key}
-              type="button"
-              title={it.label}
-              onClick={() => onChange(it.key)}
-              className={`sb__item ${isActive ? "is-active" : ""}`}
-            >
-              <span className="sb__iconWrap" aria-hidden="true">
-                <Icon name={it.key} active={isActive} />
-              </span>
+        <nav className="sb__nav" aria-label="Menú">
+          {items.map((it) => {
+            const isActive = active === it.key;
 
-              <span className={`sb__labelSlot ${open ? "is-open" : "is-closed"}`}>
-                <span className="sb__label">{it.label}</span>
-              </span>
+            return (
+              <button
+                key={it.key}
+                type="button"
+                title={it.label}
+                onClick={() => onChange(it.key)}
+                className={`sb__item ${isActive ? "is-active" : ""}`}
+              >
+                <span className="sb__iconWrap" aria-hidden="true">
+                  <Icon name={it.key} active={isActive} />
+                </span>
 
-              {open && isActive && <span className="sb__activeRail" />}
-            </button>
-          );
-        })}
-      </nav>
-    </motion.aside>
+                <span className={`sb__labelSlot ${open ? "is-open" : "is-closed"}`}>
+                  <span className="sb__label">{it.label}</span>
+                </span>
+
+                {open && isActive && <span className="sb__activeRail" />}
+              </button>
+            );
+          })}
+        </nav>
+      </motion.aside>
+    </>
   );
 }
