@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import "../styles/venta.css";
 import * as posApi from "../api/pos";
 import type { VarianteLookup, VarianteRow, CrearVentaRequest, ProductoLite } from "../api/pos";
@@ -31,6 +32,20 @@ function onlyDigits(raw: string) {
   return raw.replace(/[^\d]/g, "");
 }
 
+
+const easeOut = [0.16, 1, 0.3, 1] as const;
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 10, filter: "blur(6px)" },
+  show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.55, ease: easeOut } },
+};
+
+const pop = {
+  hidden: { opacity: 0, scale: 0.98, y: 10, filter: "blur(8px)" },
+  show: { opacity: 1, scale: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.22, ease: easeOut } },
+  exit: { opacity: 0, scale: 0.985, y: 8, filter: "blur(8px)", transition: { duration: 0.16, ease: easeOut } },
+};
+
 function SuccessModal({
   open,
   venta,
@@ -42,44 +57,53 @@ function SuccessModal({
   onOpenTicket: () => void;
   onNewSale: () => void;
 }) {
-  if (!open || !venta) return null;
-
   return (
-    <div className="modalOverlay" role="dialog" aria-modal="true">
-      <div className="modalCard">
-        <div className="modalHead">
-          <div className="modalBadge">OK</div>
-          <div>
-            <h3 className="modalTitle">Venta registrada</h3>
-            <div className="modalSub">Ticket generado correctamente.</div>
-          </div>
-        </div>
+    <AnimatePresence>
+      {open && venta && (
+        <motion.div
+          className="modalOverlay"
+          role="dialog"
+          aria-modal="true"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1, transition: { duration: 0.18 } }}
+          exit={{ opacity: 0, transition: { duration: 0.14 } }}
+        >
+          <motion.div className="modalCard" variants={pop} initial="hidden" animate="show" exit="exit">
+            <div className="modalHead">
+              <div className="modalBadge ok">OK</div>
+              <div>
+                <h3 className="modalTitle">Venta registrada</h3>
+                <div className="modalSub">Ticket generado correctamente.</div>
+              </div>
+            </div>
 
-        <div className="modalBody">
-          <div className="modalRow">
-            <span>ID</span>
-            <b>#{venta.id}</b>
-          </div>
-          <div className="modalRow">
-            <span>Total</span>
-            <b>{money(venta.total)}</b>
-          </div>
-          <div className="modalRow">
-            <span>Cambio</span>
-            <b>{money(venta.cambio)}</b>
-          </div>
-        </div>
+            <div className="modalBody">
+              <div className="modalRow">
+                <span>ID</span>
+                <b>#{venta.id}</b>
+              </div>
+              <div className="modalRow">
+                <span>Total</span>
+                <b>{money(venta.total)}</b>
+              </div>
+              <div className="modalRow">
+                <span>Cambio</span>
+                <b>{money(venta.cambio)}</b>
+              </div>
+            </div>
 
-        <div className="modalActions">
-          <button className="btn btn-outline" type="button" onClick={onNewSale}>
-            Nueva venta
-          </button>
-          <button className="btn btn-primary" type="button" onClick={onOpenTicket}>
-            Abrir ticket
-          </button>
-        </div>
-      </div>
-    </div>
+            <div className="modalActions">
+              <button className="btn btn-outline" type="button" onClick={onNewSale}>
+                Nueva venta
+              </button>
+              <button className="btn btn-primary" type="button" onClick={onOpenTicket}>
+                Abrir ticket
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -106,109 +130,100 @@ function VariantesModal({
     if (open) setSelected(0);
   }, [open]);
 
-  if (!open) return null;
-
   const selectedVar = variantes[selected] ?? null;
 
   return (
-    <div
-      className="modalOverlay"
-      role="dialog"
-      aria-modal="true"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onCancel();
-      }}
-    >
-      <div className="modalCard" style={{ maxWidth: 820 }}>
-        <div className="modalHead">
-          <div className="modalBadge">SEL</div>
-          <div>
-            <h3 className="modalTitle">Variantes</h3>
-            <div className="modalSub">{title}</div>
-          </div>
-        </div>
-
-        <div className="modalBody">
-          {loading && <div className="muted">Cargando variantes...</div>}
-          {error && (
-            <div className="muted" style={{ color: "#b03235" }}>
-              {error}
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          className="modalOverlay"
+          role="dialog"
+          aria-modal="true"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) onCancel();
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1, transition: { duration: 0.18 } }}
+          exit={{ opacity: 0, transition: { duration: 0.14 } }}
+        >
+          <motion.div className="modalCard modalCard--wide" variants={pop} initial="hidden" animate="show" exit="exit">
+            <div className="modalHead">
+              <div className="modalBadge sel">SEL</div>
+              <div>
+                <h3 className="modalTitle">Variantes</h3>
+                <div className="modalSub">{title}</div>
+              </div>
             </div>
-          )}
 
-          {!loading && !error && variantes.length === 0 && (
-            <div className="muted">No hay variantes para este producto.</div>
-          )}
+            <div className="modalBody">
+              {loading && <div className="muted">Cargando variantes...</div>}
+              {error && <div className="muted danger">{error}</div>}
 
-          {!loading && !error && variantes.length > 0 && (
-            <div className="tablewrap" style={{ maxHeight: 420, overflow: "auto" }}>
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th style={{ textAlign: "center", width: 80 }}>COLOR</th>
-                    <th>TALLA</th>
-                    <th className="num">PRECIO</th>
-                    <th className="num">STOCK</th>
-                    <th>CODIGO</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {variantes.map((v, i) => {
-                    const active = i === selected;
-                    return (
-                      <tr
-                        key={v.codigoBarras}
-                        onClick={() => setSelected(i)}
-                        onDoubleClick={() => onPick(v)}
-                        style={{
-                          cursor: "pointer",
-                          background: active ? "rgba(30, 144, 255, 0.16)" : undefined,
-                          outline: active ? "1px solid rgba(30, 144, 255, 0.45)" : undefined,
-                        }}
-                      >
-                        <td style={{ textAlign: "center" }}>
-                          <span
-                            className="swatch"
-                            style={{
-                              display: "inline-block",
-                              width: 34,
-                              height: 14,
-                              borderRadius: 4,
-                              verticalAlign: "middle",
-                              background: v.colorHex ?? "#ffffff",
-                              border: "1px solid rgba(255,255,255,0.15)",
-                            }}
-                          />
-                        </td>
+              {!loading && !error && variantes.length === 0 && (
+                <div className="muted">No hay variantes para este producto.</div>
+              )}
 
-                        <td>{v.talla ?? "—"}</td>
-                        <td className="num">{money(v.precioVenta)}</td>
-                        <td className="num">{v.stock ?? "—"}</td>
-                        <td>{v.codigoBarras}</td>
+              {!loading && !error && variantes.length > 0 && (
+                <div className="tablewrap tablewrap--modal" style={{ maxHeight: 420, overflow: "auto" }}>
+                  <table className="table table--darkHead">
+                    <thead>
+                      <tr>
+                        <th style={{ textAlign: "center", width: 92 }}>COLOR</th>
+                        <th>TALLA</th>
+                        <th className="num">PRECIO</th>
+                        <th className="num">STOCK</th>
+                        <th>CODIGO</th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                    </thead>
+                    <tbody>
+                      {variantes.map((v, i) => {
+                        const active = i === selected;
+                        return (
+                          <tr
+                            key={v.codigoBarras}
+                            onClick={() => setSelected(i)}
+                            onDoubleClick={() => onPick(v)}
+                            className={active ? "is-rowActive" : undefined}
+                            style={{ cursor: "pointer" }}
+                          >
+                            <td style={{ textAlign: "center" }}>
+                              <span
+                                className="swatch swatch--tiny"
+                                style={{
+                                  background: v.colorHex ?? "#ffffff",
+                                }}
+                              />
+                            </td>
+                            <td>{v.talla ?? "—"}</td>
+                            <td className="num">{money(v.precioVenta)}</td>
+                            <td className="num">{v.stock ?? "—"}</td>
+                            <td>{v.codigoBarras}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
-          )}
-        </div>
 
-        <div className="modalActions">
-          <button className="btn btn-outline" type="button" onClick={onCancel}>
-            Cancelar
-          </button>
-          <button
-            className="btn btn-primary"
-            type="button"
-            disabled={loading || variantes.length === 0 || !selectedVar}
-            onClick={() => selectedVar && onPick(selectedVar)}
-          >
-            Elegir variante
-          </button>
-        </div>
-      </div>
-    </div>
+            <div className="modalActions">
+              <button className="btn btn-outline" type="button" onClick={onCancel}>
+                Cancelar
+              </button>
+              <button
+                className="btn btn-primary"
+                type="button"
+                disabled={loading || variantes.length === 0 || !selectedVar}
+                onClick={() => selectedVar && onPick(selectedVar)}
+              >
+                Elegir variante
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -223,7 +238,6 @@ export default function VentaPage() {
   const [cantidadStr, setCantidadStr] = useState<string>("1");
   const [rows, setRows] = useState<Row[]>([]);
 
-  // Inputs controlados (sin defaultValue + ref)
   const [descuentoStr, setDescuentoStr] = useState<string>("0");
   const [montoPagoStr, setMontoPagoStr] = useState<string>("0");
 
@@ -255,7 +269,6 @@ export default function VentaPage() {
   const [varModalError, setVarModalError] = useState<string | null>(null);
   const [varModalItems, setVarModalItems] = useState<VarianteRow[]>([]);
 
-  // Drafts controlados para qty por fila (sin key+defaultValue)
   const [qtyDrafts, setQtyDrafts] = useState<Record<string, string>>({});
 
   const usuarioId = 1;
@@ -263,6 +276,17 @@ export default function VentaPage() {
   const subtotal = useMemo(() => rows.reduce((acc, r) => acc + r.precio * r.cantidad, 0), [rows]);
   const total = useMemo(() => Math.max(0, subtotal - descuento), [subtotal, descuento]);
   const cambio = useMemo(() => Math.max(0, montoPago - total), [montoPago, total]);
+  const [descuentoOn, setDescuentoOn] = useState(false);
+  const descuentoRef = useRef<HTMLInputElement | null>(null);
+
+
+  const itemsCount = useMemo(() => {
+    return rows.reduce((acc, r) => {
+      const draft = qtyDrafts[r.id];
+      const qty = Math.max(1, parseIntSafe(draft ?? String(r.cantidad), r.cantidad));
+      return acc + qty;
+    }, 0);
+  }, [rows, qtyDrafts]);
 
   function showToast(type: "error" | "ok", text: string) {
     setToast({ type, text });
@@ -270,7 +294,6 @@ export default function VentaPage() {
     toastTimer.current = window.setTimeout(() => setToast(null), 2300);
   }
 
-  // Limpieza del timer (prioridad #1)
   useEffect(() => {
     return () => {
       if (toastTimer.current) window.clearTimeout(toastTimer.current);
@@ -357,7 +380,7 @@ export default function VentaPage() {
     setVarModalItems([]);
 
     try {
-      const vars = await posApi.obtenerVariantesPorProducto(p.id); // VarianteRow[]
+      const vars = await posApi.obtenerVariantesPorProducto(p.id);
       setVarModalItems(vars ?? []);
       if (!vars || vars.length === 0) setVarModalError("Este producto no tiene variantes.");
     } catch (e) {
@@ -374,7 +397,7 @@ export default function VentaPage() {
     setLookupError(null);
 
     try {
-      const full = await posApi.buscarVariantePorCodigo(v.codigoBarras); // VarianteLookup
+      const full = await posApi.buscarVariantePorCodigo(v.codigoBarras);
       setVariante(full);
 
       const nombreV = getNombreVariante(full, nameQuery ?? "");
@@ -421,7 +444,6 @@ export default function VentaPage() {
     }
 
     const cant = getCantidadActual();
-
     const nombreSeguro = variante.nombreProducto || nombre || nameQuery || "Producto";
 
     setRows((prev) => {
@@ -493,6 +515,8 @@ export default function VentaPage() {
     setNameOptions([]);
     setNameOpen(false);
     setNameError(null);
+    setDescuentoOn(false);
+
   }
 
   async function onPagar() {
@@ -540,15 +564,29 @@ export default function VentaPage() {
 
   return (
     <div className="venta">
-      <header className="venta__header">
-        <div>
-          <h1>Punto de Venta</h1>
-          <p>Registra productos, aplica descuento y cobra en segundos.</p>
+      <motion.header className="venta__header" variants={fadeUp} initial="hidden" animate="show">
+        <div className="venta__hero">
+          <div className="venta__heroText">
+            <h1>Punto de Venta</h1>
+            <p>Registra productos, aplica descuento y cobra en segundos.</p>
+          </div>
+
+          <div className="venta__heroMeta">
+            <div className="kpi kpi--brand">
+              <div className="kpi__label">Total vendido hoy</div>
+              <div className="kpi__value">{money(total)}</div>
+            </div>
+          </div>
         </div>
-      </header>
+      </motion.header>
 
       <section className="venta__top">
-        <div className="card">
+        <motion.div
+          className="card card--lift"
+          initial={{ opacity: 0, y: 10, filter: "blur(8px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          transition={{ duration: 0.45, ease: easeOut }}
+        >
           <div className="formgrid">
             <div className="field">
               <label>Código</label>
@@ -561,120 +599,121 @@ export default function VentaPage() {
                 placeholder="Escanea / escribe y presiona Enter"
                 disabled={modoNombre || loadingLookup || loadingPay}
               />
-                <div className={`collapse ${modoNombre ? "isClosed" : "isOpen"}`}>
-                    <div className="muted" style={{ marginTop: 6 }}>
-                        Tip: escribe/escanea y presiona <b>Enter</b> para buscar.
-                    </div>
+
+              <div className={`collapse ${modoNombre ? "isClosed" : "isOpen"}`}>
+                <div className="muted" style={{ marginTop: 6 }}>
+                  Tip: escribe/escanea y presiona <b>Enter</b> para buscar.
                 </div>
+              </div>
 
               {lookupError && !modoNombre && (
-                <div className="muted" style={{ color: "#b03235", marginTop: 6 }}>
+                <div className="muted danger" style={{ marginTop: 6 }}>
                   {lookupError}
                 </div>
               )}
-        
             </div>
 
-           <div className="field" style={{ position: "relative" }}>
-                <label>Nombre</label>
+            <div className={`field field--withPopover ${modoNombre && nameOpen ? "is-popoverOpen" : ""}`}>
+              <label>Nombre</label>
 
-               <input
+              <input
                 className={!modoNombre ? "inputLikeDisabled" : ""}
                 value={modoNombre ? nameQuery : nombre}
                 readOnly={!modoNombre}
                 onChange={(e) => {
-                    if (!modoNombre) return;
-                    setNameQuery(e.target.value);
-                    setNameOpen(true);
+                  if (!modoNombre) return;
+                  setNameQuery(e.target.value);
+                  setNameOpen(true);
                 }}
                 onFocus={() => {
-                    if (modoNombre && nameOptions.length > 0) setNameOpen(true);
+                  if (modoNombre && nameOptions.length > 0) setNameOpen(true);
                 }}
                 onBlur={() => window.setTimeout(() => setNameOpen(false), 120)}
                 onKeyDown={(e) => {
-                    if (!modoNombre) return;
-                    if (e.key === "Enter") onEnterNombre();
-                    if (e.key === "Escape") setNameOpen(false);
+                  if (!modoNombre) return;
+                  if (e.key === "Enter") onEnterNombre();
+                  if (e.key === "Escape") setNameOpen(false);
                 }}
                 placeholder={modoNombre ? "Escribe nombre y presiona Enter" : "Buscar por nombre (habilita toggle)"}
                 disabled={loadingPay}
+              />
+
+              <div className="toggle toggle--below">
+                <input
+                  id="toggleNombre"
+                  type="checkbox"
+                  checked={modoNombre}
+                  onChange={(e) => {
+                    const v = e.target.checked;
+                    setModoNombre(v);
+
+                    setCodigo("");
+                    setNombre("");
+                    setPrecio(0);
+                    setColor("#ffffff");
+                    setCantidadStr("1");
+                    setVariante(null);
+                    setLookupError(null);
+
+                    setPickedProducto(null);
+                    setNameQuery("");
+                    setNameOptions([]);
+                    setNameOpen(false);
+                    setNameError(null);
+                  }}
                 />
+                <label htmlFor="toggleNombre">Habilitar búsqueda por nombre</label>
+              </div>
 
+              {modoNombre && (
+                <>
+                  {nameError && (
+                    <div className="muted danger" style={{ marginTop: 6 }}>
+                      {nameError}
+                    </div>
+                  )}
 
-                {/* Toggle abajo del input */}
-                <div className="toggle toggle--below">
-                    <input
-                    id="toggleNombre"
-                    type="checkbox"
-                    checked={modoNombre}
-                    onChange={(e) => {
-                        const v = e.target.checked;
-                        setModoNombre(v);
-
-                        setCodigo("");
-                        setNombre("");
-                        setPrecio(0);
-                        setColor("#ffffff");
-                        setCantidadStr("1");
-                        setVariante(null);
-                        setLookupError(null);
-
-                        setPickedProducto(null);
-                        setNameQuery("");
-                        setNameOptions([]);
-                        setNameOpen(false);
-                        setNameError(null);
-                    }}
-                    />
-                    <label htmlFor="toggleNombre">Habilitar búsqueda por nombre</label>
-                </div>
-
-                {modoNombre && (
-                    <>
-                    {nameError && (
-                        <div className="muted" style={{ color: "#b03235", marginTop: 6 }}>
-                        {nameError}
-                        </div>
-                    )}
-
+                  <AnimatePresence>
                     {nameOpen && nameOptions.length > 0 && (
-                        <div
-                        className="card"
+                      <motion.div
+                        className="popover"
+                        initial={{ opacity: 0, y: 8, scale: 0.99, filter: "blur(8px)" }}
+                        animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+                        exit={{ opacity: 0, y: 6, scale: 0.99, filter: "blur(8px)" }}
+                        transition={{ duration: 0.16, ease: easeOut }}
                         style={{
-                            position: "absolute",
-                            zIndex: 30,
-                            left: 0,
-                            right: 0,
-                            top: "100%",
-                            marginTop: 8,
-                            padding: 8,
-                            maxHeight: 260,
-                            overflow: "auto",
+                          position: "absolute",
+                          left: 0,
+                          right: 0,
+                          top: "100%",
+                          marginTop: 10,
+                          padding: 8,
+                          maxHeight: 280,
+                          overflow: "auto",
                         }}
-                        >
+                      >
+                        <div className="popover__title">Resultados</div>
+
+                        {loadingName && <div className="muted" style={{ padding: "10px 12px" }}>Buscando…</div>}
+
                         {nameOptions.map((p) => (
-                            <button
+                          <button
                             key={p.id}
                             type="button"
-                            className="btn btn-ghost"
-                            style={{
-                                width: "100%",
-                                justifyContent: "flex-start",
-                                padding: "10px 12px",
-                                borderRadius: 10,
-                            }}
+                            className="rowpick"
                             onMouseDown={(ev) => ev.preventDefault()}
                             onClick={() => openVariantesForProducto(p)}
-                            >
-                            {p.nombreProducto}
-                            </button>
+                          >
+                            <span className="rowpick__main">{p.nombreProducto}</span>
+                            <span className="rowpick__hint">Enter para seleccionar</span>
+                          </button>
                         ))}
-                        </div>
+                      </motion.div>
                     )}
-                    </>
-                )}
-                </div>
-
+                  </AnimatePresence>
+                </>
+              )}
+            </div>
 
             <div className="field">
               <label>Precio</label>
@@ -688,7 +727,7 @@ export default function VentaPage() {
 
             <div className="field field--tiny">
               <label>Cantidad</label>
-              <div className="stepper">
+              <div className="stepper stepper--pro">
                 <button
                   type="button"
                   onClick={() => {
@@ -737,26 +776,39 @@ export default function VentaPage() {
 
             <div className="field field--actions">
               <label>&nbsp;</label>
-              <button
+              <motion.button
                 className="btn btn-primary"
                 type="button"
                 onClick={onAgregar}
                 disabled={loadingPay || !variante}
                 title={!variante ? "Carga una variante (código o nombre)" : undefined}
+                whileHover={!loadingPay && variante ? { y: -1 } : undefined}
+                whileTap={!loadingPay && variante ? { y: 0 } : undefined}
+                transition={{ duration: 0.14 }}
               >
                 Agregar
-              </button>
+              </motion.button>
             </div>
           </div>
-        </div>
+        </motion.div>
       </section>
 
+      {/* BODY */}
       <section className="venta__body">
-        <div className="card tablecard">
+        {/* TABLE */}
+        <motion.div className="card tablecard card--lift" variants={fadeUp} initial="hidden" animate="show">
           <div className="tablecard__head">
             <h2>Productos</h2>
-            <div className="muted">
-              Subtotal: <b>{money(subtotal)}</b>
+
+            <div className="tableMeta">
+              <div className="tableMeta__chip">
+                <span>Items</span>
+                <b>{itemsCount}</b>
+              </div>
+              <div className="tableMeta__chip">
+                <span>Subtotal</span>
+                <b className="brand">{money(subtotal)}</b>
+              </div>
             </div>
           </div>
 
@@ -765,6 +817,7 @@ export default function VentaPage() {
               <thead>
                 <tr>
                   <th>NOMBRE PRODUCTO</th>
+                  <th style={{ width: 92, textAlign: "center" }}>COLOR</th>
                   <th className="num">CANTIDAD</th>
                   <th className="num">PRECIO UNITARIO</th>
                   <th className="num">SUBTOTAL</th>
@@ -774,7 +827,7 @@ export default function VentaPage() {
               <tbody>
                 {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="empty">
+                    <td colSpan={6} className="empty">
                       Agrega productos para comenzar la venta.
                     </td>
                   </tr>
@@ -784,12 +837,29 @@ export default function VentaPage() {
                     const value = draft ?? String(r.cantidad);
 
                     return (
-                      <tr key={r.id}>
+                      <motion.tr
+                        key={r.id}
+                        className="row"
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.18, ease: easeOut }}
+                        whileHover={{ backgroundColor: "rgba(16,24,40,0.02)" }}
+                      >
                         <td className="name">
-                          {r.nombre}
-                          <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+                          <div className="name__top">
+                            <span className="name__title">{r.nombre}</span>
+                          </div>
+                          <div className="muted" style={{ fontSize: 13, marginTop: 4 }}>
                             {r.codigoBarras}
                           </div>
+                        </td>
+
+                        <td style={{ textAlign: "center" }}>
+                          {r.colorHex ? (
+                            <span className="colorDot" title={r.colorHex} style={{ background: r.colorHex }} />
+                          ) : (
+                            <span className="muted">—</span>
+                          )}
                         </td>
 
                         <td className="num">
@@ -810,9 +880,7 @@ export default function VentaPage() {
                               const raw = qtyDrafts[r.id] ?? String(r.cantidad);
                               const next = Math.max(1, parseIntSafe(raw, r.cantidad));
 
-                              setRows((prev) =>
-                                prev.map((x) => (x.id === r.id ? { ...x, cantidad: next } : x))
-                              );
+                              setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, cantidad: next } : x)));
 
                               setQtyDrafts((prev) => {
                                 const { [r.id]: _drop, ...rest } = prev;
@@ -834,10 +902,10 @@ export default function VentaPage() {
                             disabled={loadingPay}
                             type="button"
                           >
-                            X
+                            ✕
                           </button>
                         </td>
-                      </tr>
+                      </motion.tr>
                     );
                   })
                 )}
@@ -847,90 +915,124 @@ export default function VentaPage() {
 
           <div className="tablecard__foot">
             <div className="totalbar">
-              <span>TOTAL:</span>
-              <b>{money(subtotal)}</b>
+              <span>SUBTOTAL:</span>
+              <b className="brand">{money(subtotal)}</b>
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        <aside className="card paycard">
-          <h2>Cobro</h2>
+        <motion.aside className="card paycard card--lift" variants={fadeUp} initial="hidden" animate="show">
+          <div className="payhead">
+            <h2>Registro del Pago</h2>
 
-          <div className="paygrid">
-            <label>Descuento</label>
-            <input
-              inputMode="numeric"
-              value={descuentoStr}
-              onFocus={(e) => e.currentTarget.select()}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur();
-              }}
-              onChange={(e) => {
-                const raw = e.currentTarget.value;
-                if (/^\d*$/.test(raw)) setDescuentoStr(raw);
-              }}
-              onBlur={() => {
-                const next = Math.max(0, parseIntSafe(descuentoStr, 0));
-                setDescuentoStr(String(next));
-              }}
-              disabled={rows.length === 0 || loadingPay}
-            />
-
-            <label>Monto pago</label>
-            <input
-              inputMode="numeric"
-              value={montoPagoStr}
-              onFocus={(e) => e.currentTarget.select()}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur();
-              }}
-              onChange={(e) => {
-                const raw = e.currentTarget.value;
-                if (/^\d*$/.test(raw)) setMontoPagoStr(raw);
-              }}
-              onBlur={() => {
-                const next = Math.max(0, parseIntSafe(montoPagoStr, 0));
-                setMontoPagoStr(String(next));
-              }}
-              disabled={rows.length === 0 || loadingPay}
-            />
-
-            <label>Cambio</label>
-            <div className="value">{money(cambio)}</div>
-
-            <label className="totalLabel">Total</label>
-            <div className="value totalValue">{money(total)}</div>
           </div>
 
+          <div className="paygrid">
+  <label className="labelWithBtn">
+    <span>Descuento</span>
+    <button
+      type="button"
+      className="miniAction"
+      disabled={rows.length === 0 || loadingPay}
+      onClick={() => {
+        setDescuentoOn((prev) => {
+          const next = !prev;
+          if (!next) setDescuentoStr("0");
+          else window.setTimeout(() => descuentoRef.current?.focus(), 0);
+          return next;
+        });
+      }}
+    >
+      {descuentoOn ? "Quitar" : "Poner"}
+    </button>
+  </label>
+
+  <input
+    ref={descuentoRef}
+    inputMode="numeric"
+    value={descuentoStr}
+    onFocus={(e) => e.currentTarget.select()}
+    onKeyDown={(e) => {
+      if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur();
+    }}
+    onChange={(e) => {
+      const raw = e.currentTarget.value;
+      if (/^\d*$/.test(raw)) setDescuentoStr(raw);
+    }}
+    onBlur={() => {
+      const next = Math.max(0, parseIntSafe(descuentoStr, 0));
+      setDescuentoStr(String(next));
+    }}
+    disabled={rows.length === 0 || loadingPay || !descuentoOn}
+  />
+
+  <label>Monto pago</label>
+  <input
+    inputMode="numeric"
+    value={montoPagoStr}
+    onFocus={(e) => e.currentTarget.select()}
+    onKeyDown={(e) => {
+      if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur();
+    }}
+    onChange={(e) => {
+      const raw = e.currentTarget.value;
+      if (/^\d*$/.test(raw)) setMontoPagoStr(raw);
+    }}
+    onBlur={() => {
+      const next = Math.max(0, parseIntSafe(montoPagoStr, 0));
+      setMontoPagoStr(String(next));
+    }}
+    disabled={rows.length === 0 || loadingPay}
+  />
+
+  <label>Cambio</label>
+  <div className="valueBox">{money(cambio)}</div>
+
+  <div className="payDivider" aria-hidden="true" />
+
+  <label className="totalLabel">Total</label>
+  <div className="valueBox valueBox--total">{money(total)}</div>
+</div>
+
+
           <div className="payactions">
-            <button
-              className="btn btn-outline"
-              type="button"
-              onClick={onVaciar}
-              disabled={rows.length === 0 || loadingPay}
-            >
+            <button className="btn btn-outline" type="button" onClick={onVaciar} disabled={rows.length === 0 || loadingPay}>
               Borrar productos
             </button>
-            <button
+
+            <motion.button
               className="btn btn-danger"
               type="button"
               onClick={onPagar}
               disabled={rows.length === 0 || loadingPay}
+              whileHover={!loadingPay && rows.length > 0 ? { y: -1 } : undefined}
+              whileTap={!loadingPay && rows.length > 0 ? { y: 0 } : undefined}
+              transition={{ duration: 0.14 }}
             >
               {loadingPay ? "Procesando..." : "Pagar"}
-            </button>
+            </motion.button>
           </div>
-        </aside>
+
+          <div className="payhint">Enter confirma campos. Escape cierra listas. Doble click elige variante en modal.</div>
+        </motion.aside>
       </section>
 
-      {toast && <div className={`toast ${toast.type}`}>{toast.text}</div>}
+      {/* TOAST */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            className={`toast ${toast.type}`}
+            initial={{ opacity: 0, y: 12, scale: 0.98, filter: "blur(10px)" }}
+            animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+            exit={{ opacity: 0, y: 10, scale: 0.985, filter: "blur(10px)" }}
+            transition={{ duration: 0.18, ease: easeOut }}
+          >
+            {toast.text}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <SuccessModal
-        open={successOpen}
-        venta={ventaOk}
-        onOpenTicket={handleOpenTicket}
-        onNewSale={handleNewSale}
-      />
+      <SuccessModal open={successOpen} venta={ventaOk} onOpenTicket={handleOpenTicket} onNewSale={handleNewSale} />
 
       <VariantesModal
         open={varModalOpen}
