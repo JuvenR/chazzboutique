@@ -86,6 +86,7 @@ export default function Sidebar({ active, onChange }: Props) {
   const openDelayMs = 120;
   const closeDelayMs = 90;
 
+  
   const tOpen = useRef<number | null>(null);
   const tClose = useRef<number | null>(null);
 
