@@ -70,7 +70,13 @@ function SuccessModal({
         >
           <motion.div className="modalCard" variants={pop} initial="hidden" animate="show" exit="exit">
             <div className="modalHead">
-              <div className="modalBadge ok">OK</div>
+              <div className="modalBadge ok">
+                 <img
+            className="sb_check"
+            src="/images/check.png"
+            draggable={false}
+          />
+              </div>
               <div>
                 <h3 className="modalTitle">Venta registrada</h3>
                 <div className="modalSub">Ticket generado correctamente.</div>
@@ -148,7 +154,13 @@ function VariantesModal({
         >
           <motion.div className="modalCard modalCard--wide" variants={pop} initial="hidden" animate="show" exit="exit">
             <div className="modalHead">
-              <div className="modalBadge sel">SEL</div>
+              <div className="modalBadge sel">
+                 <img
+            className="sb_hangers"
+            src="/images/hangers.png"
+            draggable={false}
+          />
+              </div>
               <div>
                 <h3 className="modalTitle">Variantes</h3>
                 <div className="modalSub">{title}</div>

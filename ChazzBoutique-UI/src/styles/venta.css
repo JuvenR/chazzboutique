@@ -512,6 +512,15 @@ body{
     0 8px 18px rgba(16,24,40,.14);
 }
 
+.sb_hangers{
+  width: 30px;
+  height: 30px;
+}
+
+.sb_check{
+  width: 25px;
+  height: 25px;
+}
 .empty{
   text-align:center;
   color: var(--muted);
@@ -853,9 +862,9 @@ body{
 }
 
 .modalBadge.sel{
-  background: rgba(59,130,246,.12);
-  border: 1px solid rgba(59,130,246,.22);
-  color: rgba(59,130,246,.95);
+  background: rgba(195, 201, 211, 0.12);
+  border: 1px solid rgba(42, 45, 51, 0.22);
+  color: rgba(11, 1, 6, 0.95);
 }
 
 .modalTitle{
